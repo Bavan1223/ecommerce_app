@@ -1,0 +1,591 @@
+/* ====================================
+   1. GLOBAL & BASE STYLES
+   ==================================== */
+
+/* Basic Reset */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+/* Main Content Container */
+.container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 20px;
+}
+
+/* ====================================
+   2. HEADER & FOOTER STYLES
+   ==================================== */
+
+header {
+    background-color: #333;
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    margin: 0;
+}
+
+header .logo {
+    color: white;
+    text-decoration: none;
+}
+
+header nav a {
+    color: white;
+    text-decoration: none;
+    margin-left: 20px;
+    font-weight: bold;
+    transition: color 0.3s;
+}
+
+header nav a:hover {
+    color: #ff9900; /* Subtle hover color */
+}
+
+/* Footer Styling */
+footer {
+    text-align: center;
+    padding: 15px;
+    background-color: #333;
+    color: white;
+    margin-top: 20px;
+}
+
+/* ====================================
+   3. HOME PAGE (INDEX) STYLES
+   ==================================== */
+
+/* Hero Banner */
+.hero-banner {
+    /* Placeholder background image; change 'tech_bg.jpg' */
+    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('tech_bg.jpg') center/cover;
+    color: white;
+    text-align: center;
+    padding: 80px 20px;
+    margin-bottom: 30px;
+    border-radius: 10px;
+}
+
+.hero-content h2 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.hero-content p {
+    font-size: 1.2em;
+    margin-bottom: 30px;
+}
+
+.shop-now-button {
+    background-color: #007bff; /* Blue */
+    color: white;
+    text-decoration: none;
+    padding: 12px 30px;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+    display: inline-block;
+}
+
+.shop-now-button:hover {
+    background-color: #0056b3;
+}
+
+/* Section Title */
+.section-title {
+    text-align: center;
+    font-size: 2em;
+    color: #333;
+    margin: 40px 0 20px;
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 10px;
+}
+
+/* Product Grid Layout */
+.product-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 0;
+    gap: 20px;
+}
+
+/* Product Card Styling */
+.product-card {
+    background-color: white;
+    border: none; /* Removed default border */
+    border-radius: 8px;
+    width: 300px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.product-card:hover {
+    transform: translateY(-5px); /* Lift card on hover */
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.product-image {
+    height: 200px;
+    background-color: #f8f8f8;
+    position: relative;
+    line-height: 200px;
+    text-align: center;
+}
+
+.product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+
+.product-details {
+    padding: 15px;
+    text-align: left;
+}
+
+.product-details h3 {
+    margin-top: 0;
+    font-size: 1.3em;
+}
+
+.description {
+    color: #555;
+    margin-bottom: 10px;
+    font-size: 0.9em;
+}
+
+.price-section {
+    margin: 10px 0;
+}
+
+.price {
+    color: #b12704;
+    font-size: 1.8em;
+    font-weight: 900;
+    display: block; /* Ensure price takes up its own line */
+}
+
+.add-to-cart {
+    background-color: #ff9900;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    text-transform: uppercase;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.add-to-cart:hover {
+    background-color: #e68a00;
+}
+
+/* Call to Action Section */
+.cta-section {
+    background-color: #e0f7fa;
+    text-align: center;
+    padding: 40px;
+    margin: 40px auto 20px;
+    border-radius: 10px;
+    border: 1px solid #b2ebf2;
+}
+
+.contact-button {
+    background-color: #00bcd4;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: background-color 0.3s;
+}
+
+.contact-button:hover {
+    background-color: #0097a7;
+}
+
+
+/* ====================================
+   4. CART PAGE STYLES
+   ==================================== */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+table, th, td {
+    border: 1px solid #ddd;
+}
+
+th {
+    background-color: #f2f2f2;
+    padding: 12px;
+    text-align: left;
+}
+
+td {
+    padding: 12px;
+}
+
+/* Checkout Area */
+.checkout-area {
+    text-align: right;
+    margin-top: 20px;
+    padding: 15px;
+    background-color: white;
+    border-radius: 4px;
+}
+
+.total-price {
+    font-size: 1.5em;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.checkout-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+.checkout-button:hover {
+    background-color: #0056b3;
+}
+
+
+/* ====================================
+   5. PROFILE PAGE STYLES
+   ==================================== */
+
+.profile-details {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.profile-details p {
+    line-height: 1.8;
+}
+
+.profile-details h3 {
+    border-bottom: 2px solid #f4f4f4;
+    padding-bottom: 5px;
+    margin-top: 25px;
+}
+
+.edit-button, .logout-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+    margin-left: 10px;
+    margin-top: 15px;
+}
+
+.edit-button:hover, .logout-button:hover {
+    background-color: #0056b3;
+}
+
+
+/* ====================================
+   6. LOGIN/REGISTER STYLES
+   ==================================== */
+
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 50px 0;
+    background: #e9eef2;
+}
+
+.login-card {
+    background-color: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 450px;
+    text-align: center;
+}
+
+.login-card h2 {
+    color: #333;
+    margin-bottom: 25px;
+    font-size: 2em;
+    border-bottom: 3px solid #007bff;
+    display: inline-block;
+    padding-bottom: 5px;
+}
+
+.login-card h3 {
+    text-align: left;
+    color: #555;
+    margin: 20px 0 15px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+.login-form input, .register-form input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+}
+
+.login-form input:focus, .register-form input:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.2);
+}
+
+/* Form Buttons */
+.login-button {
+    background-color: #007bff; /* Primary Blue for Login */
+    color: white;
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.3s;
+}
+
+.login-button:hover {
+    background-color: #0056b3;
+}
+
+.register-button {
+    background-color: #28a745; /* Green for Create Account */
+    color: white;
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.3s;
+}
+
+.register-button:hover {
+    background-color: #1e7e34;
+}
+
+.divider {
+    border: 0;
+    height: 1px;
+    background-color: #eee;
+    margin: 30px 0;
+}
+
+.error-message {
+    color: #dc3545;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+/* --- BOTTOM LINK STYLES (Final Requirement) --- */
+
+.form-link-bottom {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.form-link-bottom p {
+    margin-bottom: 0;
+    color: #666;
+}
+
+.small-blue-link {
+    color: #007bff;
+    text-decoration: underline;
+    font-size: 0.9em; /* Small font size */
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.small-blue-link:hover {
+    color: #0056b3;
+}
+/* --- New CSS for Disabled Links --- */
+
+.disabled-link {
+    /* Visual clue: grayed out text */
+    color: #999 !important; 
+    /* Interaction cue: cursor shows it's not clickable */
+    cursor: not-allowed !important;
+    /* Prevent any visual change on hover */
+    pointer-events: none; 
+}
+/* Add to style.css */
+/* Ensure the button fills the link area */
+.add-to-cart-link {
+    display: block;
+    text-decoration: none;
+}
+/* No other style changes are needed as the design is already consistent. */
+/* --- Flash Message Styling --- */
+.flash-messages {
+    margin: 20px 0;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.flash-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.flash-info {
+    background-color: #bee5eb;
+    color: #0c5460;
+    border: 1px solid #bbe0e6;
+}
+
+.flash-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+/* ====================================
+   FLASH MESSAGE STYLING (UPDATED)
+   ==================================== */
+
+.flash-messages {
+    margin: 20px 0;
+    padding: 15px 20px; /* Increased padding for better visibility */
+    border-radius: 5px;
+    font-weight: bold;
+    /* Center the flash message for better presentation */
+    text-align: center;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 🛑 ORANGE SUCCESS ALERT */
+.flash-success {
+    /* Orange/Yellow Background similar to a warning/alert */
+    background-color: #fff3cd; /* Light Orange/Yellow */
+    color: #856404; /* Darker Yellow/Brown Text */
+    border: 1px solid #ffeeba;
+}
+
+/* Info and Error messages remain standard */
+.flash-info {
+    background-color: #bee5eb;
+    color: #0c5460;
+    border: 1px solid #bbe0e6;
+}
+
+.flash-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+/* --- Styles for the links below the form buttons --- */
+
+.form-link-bottom {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.form-link-bottom p {
+    margin-bottom: 0;
+    color: #666;
+}
+
+/* Style for the "small blue link" */
+.small-blue-link {
+    color: #007bff; /* Blue color */
+    text-decoration: underline;
+    font-size: 0.9em; /* Smaller font size */
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.small-blue-link:hover {
+    color: #0056b3;
+}
+/* Popup message near Add to Cart button */
+.cart-popup {
+    position: absolute;
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.9em;
+    font-weight: bold;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease-in-out;
+    margin-left: 10px;
+    z-index: 10;
+}
+
+.cart-popup.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Ensure button parent is relative for positioning */
+.product-details {
+    position: relative;
+}

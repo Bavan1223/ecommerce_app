@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Tech Mart{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1><a href="{{ url_for('index') }}" class="logo">Tech Mart 🛒</a></h1>
+        <nav>
+            <a href="{{ url_for('index') }}">Home</a>
+            
+            <a href="{% if 'user_id' in session %}{{ url_for('cart') }}{% else %}#{% endif %}"
+               class="{% if 'user_id' not in session %}disabled-link{% endif %}">
+                Cart
+            </a>
+            
+            {% if 'user_id' in session %}
+                <a href="{{ url_for('profile') }}">Account</a>
+                <a href="{{ url_for('logout') }}" class="logout-link">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}">Log In / Register</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <p class="flash-{{ category }}">{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+</main>
+    <footer>
+        <p>&copy; 2025 Tech Mart. All rights reserved.</p>
+        
+    </footer>
+</body>
+</html>

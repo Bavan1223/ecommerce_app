@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Shop the Latest Tech{% endblock %}
+
+{% block content %}
+<!-- ✅ Add-to-Cart Animation + Redirect -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const buttons = document.querySelectorAll('.add-to-cart');
+
+  buttons.forEach(button => {
+    button.addEventListener('click', (e) => {
+      e.preventDefault();
+
+      // Create popup message
+      const message = document.createElement('span');
+      message.className = 'cart-popup';
+      message.textContent = '✅ Item added to cart';
+      button.parentElement.appendChild(message);
+
+      // Animate in
+      setTimeout(() => message.classList.add('show'), 10);
+
+      // Animate out & remove
+      setTimeout(() => {
+        message.classList.remove('show');
+        setTimeout(() => message.remove(), 300);
+      }, 1500);
+
+      // ✅ Redirect to Flask route after short delay
+      const link = button.closest('a');
+      if (link && link.href) {
+        setTimeout(() => {
+          window.location.href = link.href;
+        }, 400);
+      }
+    });
+  });
+});
+</script>
+
+
+<!-- ✅ Hero Banner -->
+<div class="hero-banner">
+  <div class="hero-content">
+    <h2>Experience the Future of Tech Today!</h2>
+    <p>Don’t miss out on our limited-time deals on the hottest gadgets and accessories.</p>
+    <a href="#products" class="shop-now-button">Shop Now</a>
+  </div>
+</div>
+
+<!-- ✅ Products Section -->
+<h2 class="section-title" id="products">Featured Products</h2>
+
+<div class="product-grid">
+  {% for product in products %}
+  <div class="product-card">
+    <div class="product-image">
+      <img src="{{ url_for('static', filename='images/' + product.image_url) }}" 
+           alt="{{ product.name }}"
+           onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/myphoto.png') }}';">
+     
+    </div>
+
+    <div class="product-details">
+      <h3>{{ product.name }}</h3>
+      <p class="description">{{ product.description | truncate(60) }}</p>
+
+      <div class="price-section">
+        <span class="price">${{ '%.2f' | format(product.price) }}</span>
+      </div>
+
+      <a href="{{ url_for('add_to_cart_check', product_id=product.id) }}" class="add-to-cart-link">
+        <button class="add-to-cart">Add to Cart</button>
+      </a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- ✅ CTA Section -->
+<div class="cta-section">
+  <h3>Need Help?</h3>
+  <p>Our customer support team is ready 24/7 to assist you with any questions or issues.</p>
+  <button class="contact-button">Contact Support</button>
+</div>
+
+<!-- ✅ Optional popup style -->
+<style>
+.cart-popup {
+  display: inline-block;
+  background-color: #22c55e;
+  color: white;
+  font-size: 0.8rem;
+  padding: 5px 8px;
+  border-radius: 6px;
+  margin-left: 10px;
+  opacity: 0;
+  transform: translateY(-5px);
+  transition: all 0.3s ease-in-out;
+}
+.cart-popup.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+</style>
+
+{% endblock %}
