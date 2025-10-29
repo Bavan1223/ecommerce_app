@@ -123,17 +123,30 @@ def logout():
     return redirect(url_for('index'))
 
 
-@app.route('/profile')
+@app.route('/profile', methods=['GET', 'POST'])
 def profile():
     if 'user_id' not in session:
+        flash("Please log in to access profile.", "warning")
         return redirect(url_for('login'))
 
-    user_info = {
-        'name': session.get('user_id').capitalize(),
-        'email': session.get('user_email', 'No email provided'),
-        'address': '123 E-Commerce Blvd, Tech City'
+    # Load or mock user data (replace this with DB query later)
+    user = {
+        'first_name': 'Bavan',
+        'last_name': 'Kumar',
+        'gender': 'Male',
+        'email': 'sbavankumar2005@gmail.com',
+        'mobile': '+917892907448'
     }
-    return render_template('profile.html', user=user_info)
+
+    if request.method == 'POST':
+        user['first_name'] = request.form.get('first_name')
+        user['last_name'] = request.form.get('last_name')
+        user['gender'] = request.form.get('gender')
+        user['email'] = request.form.get('email')
+        user['mobile'] = request.form.get('mobile')
+        flash("Profile updated successfully!", "success")
+
+    return render_template('profile.html', user=user)
 
 
 if __name__ == '__main__':

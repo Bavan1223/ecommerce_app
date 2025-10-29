@@ -1,22 +1,120 @@
 {% extends "base.html" %}
-
 {% block title %}Account Profile{% endblock %}
-
 {% block content %}
-    <h2>Account Profile</h2>
-    <div class="profile-details">
-        <h3>User Information</h3>
-        <p><strong>Name:</strong> {{ user.name }}</p>
-        <p><strong>Email:</strong> {{ user.email }}</p>
-        <p><strong>Shipping Address:</strong> {{ user.address }}</p>
-        <button class="edit-button">Edit Profile</button>
 
-        <h3>Order History</h3>
-        <ul>
-            <li>Order #1001 - Date: 2025-05-01 - Status: Shipped</li>
-            <li>Order #1002 - Date: 2025-06-15 - Status: Delivered</li>
-        </ul>
-         <a href="{{ url_for('logout') }}" class="logout-btn-top"><button class="logout-button">Logout</button></a>
-        
+<div class="profile-page">
+  <h2>Account Profile</h2>
+
+  <!-- Edit button at top -->
+  <div class="top-controls">
+    <a href="#" class="edit-link" onclick="enableAllEdit()">✏️ Edit Profile</a>
+  </div>
+
+  <form method="POST" action="{{ url_for('profile') }}" id="profileForm">
+    <!-- Personal Info -->
+    <div class="section">
+      <h3>Personal Information</h3>
+      <div class="input-row">
+        <input type="text" name="first_name" value="{{ user.first_name or '' }}" placeholder="First Name" disabled>
+        <input type="text" name="last_name" value="{{ user.last_name or '' }}" placeholder="Last Name" disabled>
+      </div>
+
+      <div class="gender-row">
+        <label>Your Gender</label>
+        <div class="radio-group">
+          <label><input type="radio" name="gender" value="Male" {% if user.gender=='Male' %}checked{% endif %} disabled> Male</label>
+          <label><input type="radio" name="gender" value="Female" {% if user.gender=='Female' %}checked{% endif %} disabled> Female</label>
+        </div>
+      </div>
     </div>
+
+    <!-- Email -->
+    <div class="section">
+      <h3>Email Address</h3>
+      <input type="email" name="email" id="email" value="{{ user.email or '' }}" disabled>
+    </div>
+
+    <!-- Mobile -->
+    <div class="section">
+      <h3>Mobile Number</h3>
+      <input type="text" name="mobile" id="mobile" value="{{ user.mobile or '' }}" disabled>
+    </div>
+
+    <button type="submit" class="save-btn" id="saveBtn" style="display:none;">💾 Save Changes</button>
+  </form>
+
+  <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+</div>
+
+<!-- JS for enabling all fields -->
+<script>
+function enableAllEdit() {
+  document.querySelectorAll('#profileForm input').forEach(el => el.removeAttribute('disabled'));
+  document.getElementById('saveBtn').style.display = 'block';
+}
+</script>
+
+<style>
+.profile-page {
+  width: 60%;
+  margin: 40px auto;
+  background: #fff;
+  border-radius: 12px;
+  padding: 30px 40px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  font-family: 'Segoe UI', sans-serif;
+}
+.top-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+.edit-link {
+  color: #1a73e8;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+}
+.section {
+  margin-bottom: 25px;
+}
+.input-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+.input-row input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #f8f8f8;
+}
+.gender-row {
+  margin-top: 15px;
+}
+.radio-group label {
+  margin-right: 15px;
+  font-size: 14px;
+}
+.save-btn {
+  margin-top: 20px;
+  background-color: #1a73e8;
+  color: #fff;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 6px;
+  font-size: 15px;
+  cursor: pointer;
+}
+.logout-btn {
+  display: block;
+  margin-top: 25px;
+  text-align: center;
+  color: #d93025;
+  text-decoration: none;
+  font-weight: bold;
+}
+</style>
+
 {% endblock %}
