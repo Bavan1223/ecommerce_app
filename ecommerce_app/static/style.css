@@ -1,5 +1,5 @@
 /* ====================================
-   1. GLOBAL & BASE STYLES
+    1. GLOBAL & BASE STYLES
    ==================================== */
 
 /* Basic Reset */
@@ -11,14 +11,18 @@ body {
 }
 
 /* Main Content Container */
-.container {
+/* The '.container' class from base.html is now provided by Bootstrap.
+   We'll keep this one for custom overrides if needed,
+   but we will rename it to avoid conflict.
+*/
+.main-container-custom {
     max-width: 1200px;
     margin: 20px auto;
     padding: 0 20px;
 }
 
 /* ====================================
-   2. HEADER & FOOTER STYLES
+    2. HEADER & FOOTER STYLES
    ==================================== */
 
 header {
@@ -61,7 +65,7 @@ footer {
 }
 
 /* ====================================
-   3. HOME PAGE (INDEX) STYLES
+    3. HOME PAGE (INDEX) STYLES
    ==================================== */
 
 /* Hero Banner */
@@ -71,8 +75,8 @@ footer {
     color: white;
     text-align: center;
     padding: 80px 20px;
-    margin-bottom: 30px;
-    border-radius: 10px;
+    /* margin-bottom: 30px; (Now handled by Bootstrap mb-4) */
+    /* border-radius: 10px; (Now handled by Bootstrap rounded) */
 }
 
 .hero-content h2 {
@@ -224,29 +228,18 @@ footer {
 
 
 /* ====================================
-   4. CART PAGE STYLES
+    4. CART PAGE STYLES
    ==================================== */
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    background-color: white;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
+/* Bootstrap 'table' classes handle most of this now.
+   We'll keep the custom checkout area styles.
+*/
 
-table, th, td {
-    border: 1px solid #ddd;
-}
-
-th {
-    background-color: #f2f2f2;
-    padding: 12px;
-    text-align: left;
-}
-
-td {
-    padding: 12px;
+.empty-cart-message {
+    padding: 30px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 /* Checkout Area */
@@ -281,46 +274,127 @@ td {
 
 
 /* ====================================
-   5. PROFILE PAGE STYLES
+    5. PROFILE PAGE STYLES (MOVED)
    ==================================== */
+/* These styles were moved from profile.html
+*/
+.account-container {
+    display: flex;
+    gap: 20px;
+    padding: 30px 0; /* Remove horizontal padding, Bootstrap container handles it */
+}
 
-.profile-details {
-    background-color: white;
+.sidebar {
+    width: 260px;
+    background: #fff;
     padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    /* Added height fit-content */
+    height: fit-content;
 }
 
-.profile-details p {
-    line-height: 1.8;
+.profile-card {
+    text-align: center;
+    margin-bottom: 25px;
 }
 
-.profile-details h3 {
-    border-bottom: 2px solid #f4f4f4;
-    padding-bottom: 5px;
-    margin-top: 25px;
+.profile-card img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin-bottom: 10px;
 }
 
-.edit-button, .logout-button {
-    background-color: #007bff;
+.menu-section {
+    margin-bottom: 20px;
+}
+
+.menu-section h6 {
+    font-size: 14px;
+    color: #555;
+    font-weight: 600;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.menu-section a {
+    display: block;
+    padding: 6px 0;
+    color: #007bff;
+    text-decoration: none;
+}
+
+.menu-section a:hover {
+    text-decoration: underline;
+}
+
+/* Updated logout button to be a link */
+.logout-btn-link {
+    text-decoration: none;
     color: white;
-    border: none;
-    padding: 10px 15px;
-    font-weight: bold;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: background-color 0.3s;
-    margin-left: 10px;
-    margin-top: 15px;
+}
+.logout-btn-link:hover {
+    color: white;
 }
 
-.edit-button:hover, .logout-button:hover {
-    background-color: #0056b3;
+.logout-btn {
+    width: 100%;
+    background: #dc3545;
+    border: none;
+    border-radius: 6px;
+    margin-top: 15px;
+    padding: 10px 0;
+    color: #fff;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.logout-btn:hover {
+    background: #c82333;
+}
+
+.profile-content {
+    flex: 1;
+    background: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.section {
+    border-bottom: 1px solid #eee;
+    padding: 15px 0;
+}
+
+.section:last-child {
+    border-bottom: none;
+}
+
+.section h5 {
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.info p {
+    margin: 4px 0;
+    color: #555;
+}
+
+.edit-btn {
+    float: right;
+    background: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 14px;
 }
 
 
 /* ====================================
-   6. LOGIN/REGISTER STYLES
+    6. LOGIN/REGISTER STYLES
    ==================================== */
 
 .login-container {
@@ -328,7 +402,7 @@ td {
     justify-content: center;
     align-items: center;
     padding: 50px 0;
-    background: #e9eef2;
+    /* background: #e9eef2; (Removing this to use the default body bg) */
 }
 
 .login-card {
@@ -368,6 +442,7 @@ td {
     color: #333;
 }
 
+/* Using Bootstrap form-control class would be better */
 .login-form input, .register-form input {
     width: 100%;
     padding: 12px;
@@ -437,7 +512,8 @@ td {
     font-weight: bold;
 }
 
-/* --- BOTTOM LINK STYLES (Final Requirement) --- */
+
+/* --- BOTTOM LINK STYLES --- */
 
 .form-link-bottom {
     margin-top: 20px;
@@ -460,124 +536,51 @@ td {
 .small-blue-link:hover {
     color: #0056b3;
 }
-/* --- New CSS for Disabled Links --- */
+
+/* --- Disabled Links --- */
 
 .disabled-link {
-    /* Visual clue: grayed out text */
     color: #999 !important; 
-    /* Interaction cue: cursor shows it's not clickable */
     cursor: not-allowed !important;
-    /* Prevent any visual change on hover */
     pointer-events: none; 
 }
-/* Add to style.css */
-/* Ensure the button fills the link area */
+
+/* Add to cart link wrapper */
 .add-to-cart-link {
     display: block;
     text-decoration: none;
 }
-/* No other style changes are needed as the design is already consistent. */
-/* --- Flash Message Styling --- */
-.flash-messages {
-    margin: 20px 0;
-    padding: 10px 20px;
-    border-radius: 5px;
-    font-weight: bold;
-}
 
-.flash-success {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-}
+/* --- FLASH MESSAGE STYLING --- */
+/* This is now handled by Bootstrap alerts in base.html
+  We can remove the old .flash-messages, .flash-success, etc.
+*/
 
-.flash-info {
-    background-color: #bee5eb;
-    color: #0c5460;
-    border: 1px solid #bbe0e6;
-}
 
-.flash-error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-}
 /* ====================================
-   FLASH MESSAGE STYLING (UPDATED)
+    7. POPUP STYLES (MOVED)
    ==================================== */
 
-.flash-messages {
-    margin: 20px 0;
-    padding: 15px 20px; /* Increased padding for better visibility */
-    border-radius: 5px;
-    font-weight: bold;
-    /* Center the flash message for better presentation */
-    text-align: center;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
+/* These styles were moved from index.html
+  and profile.html (old version)
+*/
 
-/* 🛑 ORANGE SUCCESS ALERT */
-.flash-success {
-    /* Orange/Yellow Background similar to a warning/alert */
-    background-color: #fff3cd; /* Light Orange/Yellow */
-    color: #856404; /* Darker Yellow/Brown Text */
-    border: 1px solid #ffeeba;
-}
-
-/* Info and Error messages remain standard */
-.flash-info {
-    background-color: #bee5eb;
-    color: #0c5460;
-    border: 1px solid #bbe0e6;
-}
-
-.flash-error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-}
-/* --- Styles for the links below the form buttons --- */
-
-.form-link-bottom {
-    margin-top: 20px;
-    text-align: center;
-}
-
-.form-link-bottom p {
-    margin-bottom: 0;
-    color: #666;
-}
-
-/* Style for the "small blue link" */
-.small-blue-link {
-    color: #007bff; /* Blue color */
-    text-decoration: underline;
-    font-size: 0.9em; /* Smaller font size */
-    cursor: pointer;
-    transition: color 0.2s;
-}
-
-.small-blue-link:hover {
-    color: #0056b3;
-}
 /* Popup message near Add to Cart button */
 .cart-popup {
-    position: absolute;
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-    padding: 6px 12px;
+    display: inline-block;
+    background-color: #22c55e;
+    color: white;
+    font-size: 0.8rem;
+    padding: 5px 8px;
     border-radius: 6px;
-    font-size: 0.9em;
-    font-weight: bold;
-    opacity: 0;
-    transform: translateY(-10px);
-    transition: all 0.3s ease-in-out;
     margin-left: 10px;
-    z-index: 10;
+    opacity: 0;
+    transform: translateY(-5px);
+    transition: all 0.3s ease-in-out;
+    /* Added for better positioning */
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
 }
 
 .cart-popup.show {
@@ -588,4 +591,25 @@ td {
 /* Ensure button parent is relative for positioning */
 .product-details {
     position: relative;
+}
+/* ====================================
+    8. PASSWORD TOGGLE ICON (NEW)
+   ==================================== */
+
+/* Make room for the icon inside the password fields */
+.login-form input[name="password"],
+.register-form input[name="password"] {
+    /* Use !important to override existing padding */
+    padding-right: 45px !important;
+}
+
+/* Style the icon itself */
+.password-toggle {
+    position: absolute;
+    right: 15px;
+    bottom: 14px; /* Adjust as needed */
+    cursor: pointer;
+    user-select: none; /* Prevents selecting the emoji text */
+    font-size: 1.2rem;
+    color: #555;
 }

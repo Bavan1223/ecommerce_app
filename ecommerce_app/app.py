@@ -1,11 +1,45 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 import json
+from functools import wraps # For our @admin_required decorator
 
 app = Flask(__name__)
 app.secret_key = 'your_super_secret_key_here'
 DEFAULT_PORT = 5001
 
-# --- Product Data ---
+# --- Database Configuration ---
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///store.db'
+db = SQLAlchemy(app)
+
+
+# =================================================================
+# --- DATABASE MODELS ---
+# =================================================================
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128))
+    is_admin = db.Column(db.Boolean, nullable=False, default=False)
+    # Added gender field
+    gender = db.Column(db.String(10), nullable=True) 
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+class Product(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    image_url = db.Column(db.String(100), nullable=False, default='myphoto.png')
+
+# --- Product Data (For one-time DB population) ---
 PRODUCTS_DICT = {
     1: {'id': 1, 'name': 'Wireless Headphones', 'price': 49.99, 'description': 'High-fidelity audio with active noise cancellation.', 'image_url': 'wirelessheadphone.jpeg'},
     2: {'id': 2, 'name': 'Smart Watch X5', 'price': 199.00, 'description': 'Track your fitness, notifications, and sleep.', 'image_url': 'watch.jpg'},
@@ -14,13 +48,47 @@ PRODUCTS_DICT = {
     5: {'id': 5, 'name': 'Portable Power Bank', 'price': 25.00, 'description': 'Keep your devices charged on the go.', 'image_url': 'powerbank.jpg'},
     6: {'id': 6, 'name': 'Webcam HD 1080p', 'price': 39.99, 'description': 'Crystal clear video calls and streaming.', 'image_url': 'webcam.jpg'}
 }
-products_list = list(PRODUCTS_DICT.values())
 
+
+# =================================================================
+# --- ADMIN DECORATOR ---
+# =================================================================
+
+def admin_required(f):
+    """
+    Restricts access to routes to only admin users.
+    Must be logged in and user.is_admin must be True.
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # 1. Check if user is logged in
+        if 'user_id' not in session:
+            flash("You must be logged in to view this page.", "error")
+            return redirect(url_for('login'))
+        
+        # 2. Get user from database
+        user_id = session['user_id']
+        user = User.query.get(user_id)
+        
+        # 3. Check if user is an admin
+        if not user or not user.is_admin:
+            flash("You do not have permission to access this page.", "error")
+            return redirect(url_for('index')) # Redirect non-admins to homepage
+        
+        # 4. If all checks pass, run the original route function
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+# =================================================================
+# --- USER ROUTES ---
+# =================================================================
 
 @app.route('/')
 def index():
-    return render_template('index.html', products=products_list)
-
+    # Read products from the database
+    products = Product.query.all()
+    return render_template('index.html', products=products)
 
 @app.route('/add_to_cart_check/<int:product_id>')
 def add_to_cart_check(product_id):
@@ -28,12 +96,13 @@ def add_to_cart_check(product_id):
         flash("Please log in to add items to your cart.", "info")
         return redirect(url_for('login'))
 
-    if product_id not in PRODUCTS_DICT:
+    # Check if product exists in the database
+    product = Product.query.get(product_id)
+    if not product:
         flash("Invalid product ID.", "error")
         return redirect(url_for('index'))
 
     product_key = str(product_id)
-
     if 'cart' not in session:
         session['cart'] = {}
 
@@ -41,14 +110,11 @@ def add_to_cart_check(product_id):
     session['cart'][product_key] = current_quantity + 1
     session.modified = True
 
-    product_name = PRODUCTS_DICT[product_id]['name']
-    flash(f"'{product_name}' added to cart!", "success")
+    flash(f"'{product.name}' added to cart!", "success")
     return redirect(url_for('index'))
-
 
 @app.route('/remove_from_cart/<int:product_id>')
 def remove_from_cart(product_id):
-    """Removes one quantity of the selected item from the cart."""
     if 'cart' not in session or str(product_id) not in session['cart']:
         flash("Item not found in cart.", "error")
         return redirect(url_for('cart'))
@@ -58,12 +124,14 @@ def remove_from_cart(product_id):
 
     if session['cart'][product_key] <= 0:
         del session['cart'][product_key]
-
+    
     session.modified = True
-
-    flash(f"Removed one '{PRODUCTS_DICT[product_id]['name']}' from cart.", "info")
+    
+    product = Product.query.get(product_id)
+    product_name = product.name if product else "Item"
+    
+    flash(f"Removed one '{product_name}' from cart.", "info")
     return redirect(url_for('cart'))
-
 
 @app.route('/cart')
 def cart():
@@ -77,77 +145,216 @@ def cart():
 
     for product_id_str, quantity in cart_data.items():
         product_id = int(product_id_str)
-        product = PRODUCTS_DICT.get(product_id)
+        product = Product.query.get(product_id) # Get product details from DB
 
         if product and quantity > 0:
-            subtotal = product['price'] * quantity
+            subtotal = product.price * quantity
             cart_items.append({
                 'id': product_id,
-                'name': product['name'],
-                'price': product['price'],
+                'name': product.name,
+                'price': product.price,
                 'quantity': quantity,
-                'subtotal': subtotal
+                'subtotal': subtotal,
+                'image_url': product.image_url
             })
             total_price += subtotal
 
     return render_template('cart.html', cart_items=cart_items, total_price=total_price)
 
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         action = request.form.get('action')
-        username = request.form['username']
+        username = request.form.get('username')
+        password = request.form.get('password')
 
         if action == 'login':
-            if username == 'testuser':
-                session['user_id'] = username
-                session['user_email'] = username + "@example.com"
+            user = User.query.filter_by(username=username).first()
+            
+            if user and user.check_password(password):
+                # Login success
+                session['user_id'] = user.id
+                session['user_username'] = user.username
+                # *** ADDED THIS LINE to save admin status to session ***
+                session['is_admin'] = user.is_admin 
+                
+                flash(f"Welcome back, {user.username}!", "success")
                 return redirect(url_for('profile'))
             else:
-                return render_template('login.html', error="Invalid username. Try 'testuser'.")
+                # Login failed
+                return render_template('login.html', error="Invalid username or password.")
 
         elif action == 'register':
-            session['user_id'] = username
-            session['user_email'] = request.form['email']
+            email = request.form.get('email')
+            # *** ADDED THIS LINE to get gender from form ***
+            gender = request.form.get('gender') 
+            
+            if User.query.filter_by(username=username).first():
+                return render_template('login.html', error="Username already taken.")
+            if User.query.filter_by(email=email).first():
+                return render_template('login.html', error="Email already registered.")
+            
+            # *** UPDATED THIS LINE to include gender ***
+            new_user = User(username=username, email=email, gender=gender, is_admin=False)
+            new_user.set_password(password)
+            
+            db.session.add(new_user)
+            db.session.commit()
+            
+            # Log in the new user immediately
+            session['user_id'] = new_user.id
+            session['user_username'] = new_user.username
+            session['is_admin'] = new_user.is_admin # This will be False
+            
+            flash("Account created successfully! You are now logged in.", "success")
             return redirect(url_for('profile'))
 
     return render_template('login.html')
 
-
 @app.route('/logout')
 def logout():
     session.pop('user_id', None)
-    session.pop('user_email', None)
+    session.pop('user_username', None)
     session.pop('cart', None)
+    # *** ADDED THIS LINE to clear admin status on logout ***
+    session.pop('is_admin', None) 
+    
+    flash("You have been logged out.", "info")
     return redirect(url_for('index'))
 
-
-@app.route('/profile', methods=['GET', 'POST'])
+@app.route('/profile')
 def profile():
     if 'user_id' not in session:
-        flash("Please log in to access profile.", "warning")
+        flash("Please log in to access profile.", "info")
         return redirect(url_for('login'))
 
-    # Load or mock user data (replace this with DB query later)
-    user = {
-        'first_name': 'Bavan',
-        'last_name': 'Kumar',
-        'gender': 'Male',
-        'email': 'sbavankumar2005@gmail.com',
-        'mobile': '+917892907448'
-    }
-
-    if request.method == 'POST':
-        user['first_name'] = request.form.get('first_name')
-        user['last_name'] = request.form.get('last_name')
-        user['gender'] = request.form.get('gender')
-        user['email'] = request.form.get('email')
-        user['mobile'] = request.form.get('mobile')
-        flash("Profile updated successfully!", "success")
+    user = User.query.get(session['user_id'])
+    
+    if not user:
+        session.clear()
+        flash("User not found. Please log in again.", "error")
+        return redirect(url_for('login'))
 
     return render_template('profile.html', user=user)
 
+
+# =================================================================
+# --- ADMIN ROUTES ---
+# =================================================================
+
+@app.route('/admin')
+@admin_required
+def admin_dashboard():
+    """
+    Shows the main admin dashboard with a list of all products.
+    """
+    products = Product.query.order_by(Product.id).all()
+    return render_template('admin_dashboard.html', products=products)
+
+@app.route('/admin/add', methods=['GET', 'POST'])
+@admin_required
+def admin_add_product():
+    """
+    Handles adding a new product to the database.
+    """
+    if request.method == 'POST':
+        name = request.form.get('name')
+        price_str = request.form.get('price')
+        description = request.form.get('description')
+        image_url = request.form.get('image_url')
+
+        if not name or not price_str:
+            flash("Product Name and Price are required.", "error")
+            return render_template('admin_form.html', title="Add New Product", product={})
+
+        try:
+            price = float(price_str)
+        except ValueError:
+            flash("Price must be a valid number.", "error")
+            return render_template('admin_form.html', title="Add New Product", product={})
+
+        new_product = Product(
+            name=name, 
+            price=price, 
+            description=description, 
+            image_url=image_url if image_url else 'myphoto.png'
+        )
+        db.session.add(new_product)
+        db.session.commit()
+        
+        flash(f"Product '{name}' added successfully!", "success")
+        return redirect(url_for('admin_dashboard'))
+    
+    # GET request: show the blank form
+    return render_template('admin_form.html', title="Add New Product", product={})
+
+@app.route('/admin/edit/<int:product_id>', methods=['GET', 'POST'])
+@admin_required
+def admin_edit_product(product_id):
+    """
+    Handles editing an existing product.
+    """
+    product = Product.query.get(product_id)
+    if not product:
+        flash("Product not found.", "error")
+        return redirect(url_for('admin_dashboard'))
+
+    if request.method == 'POST':
+        product.name = request.form.get('name')
+        product.price = float(request.form.get('price'))
+        product.description = request.form.get('description')
+        product.image_url = request.form.get('image_url')
+        
+        db.session.commit()
+        flash(f"Product '{product.name}' updated successfully!", "success")
+        return redirect(url_for('admin_dashboard'))
+    
+    # GET request: show the form pre-filled
+    return render_template('admin_form.html', title="Edit Product", product=product)
+
+@app.route('/admin/delete/<int:product_id>')
+@admin_required
+def admin_delete_product(product_id):
+    """
+    Deletes a product from the database.
+    """
+    product = Product.query.get(product_id)
+    if product:
+        product_name = product.name
+        db.session.delete(product)
+        db.session.commit()
+        flash(f"Product '{product_name}' has been deleted.", "success")
+    else:
+        flash("Product not found.", "error")
+    
+    return redirect(url_for('admin_dashboard'))
+
+
+# =================================================================
+# --- DB INIT COMMAND & APP STARTUP ---
+# =================================================================
+
+@app.cli.command('init-db')
+def init_db_command():
+    """Creates the database tables and populates them with initial products."""
+    with app.app_context():
+        db.create_all()
+        
+        if Product.query.first() is None:
+            print("Populating products...")
+            for prod_id, prod_data in PRODUCTS_DICT.items():
+                new_product = Product(
+                    id=prod_data['id'],
+                    name=prod_data['name'],
+                    price=prod_data['price'],
+                    description=prod_data['description'],
+                    image_url=prod_data['image_url']
+                )
+                db.session.add(new_product)
+            db.session.commit()
+            print("Database initialized and products populated.")
+        else:
+            print("Database already initialized.")
 
 if __name__ == '__main__':
     app.run(debug=True, port=DEFAULT_PORT)

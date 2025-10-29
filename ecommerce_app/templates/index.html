@@ -3,7 +3,6 @@
 {% block title %}Home - Shop the Latest Tech{% endblock %}
 
 {% block content %}
-<!-- ✅ Add-to-Cart Animation + Redirect -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const buttons = document.querySelectorAll('.add-to-cart');
@@ -27,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => message.remove(), 300);
       }, 1500);
 
-      // ✅ Redirect to Flask route after short delay
+      // Redirect to Flask route after short delay
       const link = button.closest('a');
       if (link && link.href) {
         setTimeout(() => {
@@ -39,9 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-
-<!-- ✅ Hero Banner -->
-<div class="hero-banner">
+<div class="hero-banner rounded mb-4">
   <div class="hero-content">
     <h2>Experience the Future of Tech Today!</h2>
     <p>Don’t miss out on our limited-time deals on the hottest gadgets and accessories.</p>
@@ -49,7 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 </div>
 
-<!-- ✅ Products Section -->
 <h2 class="section-title" id="products">Featured Products</h2>
 
 <div class="product-grid">
@@ -59,7 +55,6 @@ document.addEventListener('DOMContentLoaded', () => {
       <img src="{{ url_for('static', filename='images/' + product.image_url) }}" 
            alt="{{ product.name }}"
            onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/myphoto.png') }}';">
-     
     </div>
 
     <div class="product-details">
@@ -78,32 +73,10 @@ document.addEventListener('DOMContentLoaded', () => {
   {% endfor %}
 </div>
 
-<!-- ✅ CTA Section -->
 <div class="cta-section">
   <h3>Need Help?</h3>
   <p>Our customer support team is ready 24/7 to assist you with any questions or issues.</p>
   <button class="contact-button">Contact Support</button>
 </div>
-
-<!-- ✅ Optional popup style -->
-<style>
-.cart-popup {
-  display: inline-block;
-  background-color: #22c55e;
-  color: white;
-  font-size: 0.8rem;
-  padding: 5px 8px;
-  border-radius: 6px;
-  margin-left: 10px;
-  opacity: 0;
-  transform: translateY(-5px);
-  transition: all 0.3s ease-in-out;
-}
-.cart-popup.show {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-</style>
 
 {% endblock %}

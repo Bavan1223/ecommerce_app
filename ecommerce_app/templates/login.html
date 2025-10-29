@@ -1,86 +1,101 @@
-    {% extends "base.html" %}
+{% extends "base.html" %}
 
-    {% block title %}Log In or Create Account{% endblock %}
+{% block title %}Log In or Create Account{% endblock %}
 
-    {% block content %}
-        <div class="login-container">
-            <div class="login-card">
-                <h2>Welcome to Tech Mart</h2>
-                
-                {% if error %}
-                    <p class="error-message">{{ error }}</p>
-                {% endif %}
+{% block content %}
+    <div class="login-container">
+        <div class="login-card">
+            <h2>Welcome to Tech Mart</h2>
+            
+            {% if error %}
+                <p class="error-message">{{ error }}</p>
+            {% endif %}
 
-                <div id="login-area">
-                    <h3>Log In to Existing Account</h3>
-                    <form method="POST" action="{{ url_for('login') }}" class="login-form">
-                        <input type="hidden" name="action" value="login">
+            <div id="login-area">
+                <h3>Log In to Existing Account</h3>
+                <form method="POST" action="{{ url_for('login') }}" class="login-form">
+                    <input type="hidden" name="action" value="login">
 
-                        <div class="form-group">
-                            <label for="login-username">Username</label>
-                            <input type="text" id="login-username" name="username" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="login-password">Password</label>
-                            <input type="password" id="login-password" name="password" required>
-                        </div>
+                    <div class="form-group">
+                        <label for="login-username">Username</label>
+                        <input type="text" id="login-username" name="username" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" name="password" required>
+                        <span class="password-toggle" onclick="togglePassword('login-password', this)">👁️</span>
+                    </div>
 
-                        <button type="submit" class="login-button">Log In</button>
-                        
-                        <div class="form-link-bottom">
-                            <p>Don't have an account? 
-                                <a href="#" class="small-blue-link" onclick="toggleForms('register'); return false;">Create New Account</a>
-                            </p>
-                        </div>
-                    </form>
-                </div>
-
-                <div id="register-area" style="display: none;">
-                    <h3>Create New User</h3>
-                    <form method="POST" action="{{ url_for('login') }}" class="register-form">
-                        <input type="hidden" name="action" value="register">
-
-                        <div class="form-group">
-                            <label for="register-email">Email Address</label>
-                            <input type="email" id="register-email" name="email" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="register-username">Choose Username</label>
-                            <input type="text" id="register-username" name="username" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="register-password">Create Password</label>
-                            <input type="password" id="register-password" name="password" required>
-                        </div>
-
-                        <button type="submit" class="register-button">Create Account</button>
-
-                        <div class="form-link-bottom">
-                            <p>Already have an account? 
-                                <a href="#" class="small-blue-link" onclick="toggleForms('login'); return false;">Log In</a>
-                            </p>
-                        </div>
-                    </form>
-                </div>
-
+                    <button type="submit" class="login-button">Log In</button>
+                    
+                    <div class="form-link-bottom">
+                        <p>Don't have an account? 
+                            <a href="#" class="small-blue-link" onclick="toggleForms('register'); return false;">Create New Account</a>
+                        </p>
+                    </div>
+                </form>
             </div>
-        </div>
-        
-        <script>
-            function toggleForms(formType) {
-                const loginArea = document.getElementById('login-area');
-                const registerArea = document.getElementById('register-area');
 
-                if (formType === 'login') {
-                    loginArea.style.display = 'block';
-                    registerArea.style.display = 'none';
-                } else if (formType === 'register') {
-                    loginArea.style.display = 'none';
-                    registerArea.style.display = 'block';
-                }
+            <div id="register-area" style="display: none;">
+                <h3>Create New User</h3>
+                <form method="POST" action="{{ url_for('login') }}" class="register-form">
+                    <input type="hidden" name="action" value="register">
+
+                    <div class="form-group">
+                        <label for="register-email">Email Address</label>
+                        <input type="email" id="register-email" name="email" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="register-username">Choose Username</label>
+                        <input type="text" id="register-username" name="username" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="register-password">Create Password</label>
+                        <input type="password" id="register-password" name="password" required>
+                        <span class="password-toggle" onclick="togglePassword('register-password', this)">👁️</span>
+                    </div>
+
+                    <button type="submit" class="register-button">Create Account</button>
+
+                    <div class="form-link-bottom">
+                        <p>Already have an account? 
+                            <a href="#" class="small-blue-link" onclick="toggleForms('login'); return false;">Log In</a>
+                        </p>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+    
+    <script>
+        // This function toggles the password field type
+        function togglePassword(inputId, icon) {
+            const input = document.getElementById(inputId);
+            if (input.type === "password") {
+                input.type = "text";
+                icon.textContent = "🙈";
+            } else {
+                input.type = "password";
+                icon.textContent = "👁️";
             }
-        </script>
-    {% endblock %}
+        }
+
+        // This function toggles the login/register forms
+        function toggleForms(formType) {
+            const loginArea = document.getElementById('login-area');
+            const registerArea = document.getElementById('register-area');
+
+            if (formType === 'login') {
+                loginArea.style.display = 'block';
+                registerArea.style.display = 'none';
+            } else if (formType === 'register') {
+                loginArea.style.display = 'none';
+                registerArea.style.display = 'block';
+            }
+        }
+    </script>
+{% endblock %}

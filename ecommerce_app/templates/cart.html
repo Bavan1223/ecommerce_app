@@ -4,20 +4,11 @@
 
 {% block content %}
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      
-                <div class="alert alert-{{ 'success' if category=='success' else 'info' if category=='info' else 'danger' }}">
-                    {{ message }}
-                </div>
-         
-    {% endif %}
-{% endwith %}
-
 <h2 class="section-title text-center mb-4">🛒 Your Shopping Cart</h2>
 
 {% if cart_items %}
 <div class="cart-details-container container mt-3">
+    
     <table class="table table-striped table-bordered align-middle text-center">
         <thead class="table-dark">
             <tr>
@@ -33,9 +24,12 @@
             <tr>
                 <td>
                     <div class="d-flex align-items-center">
-                        {% if item.image_url %}
-                            <img src="{{ url_for('static', filename='images/' ~ item.image_url) }}" alt="{{ item.name }}" width="60" class="me-3 rounded">
-                        {% endif %}
+                        <img src="{{ url_for('static', filename='images/' ~ item.image_url) }}" 
+                             alt="{{ item.name }}" 
+                             width="60" 
+                             class="me-3 rounded"
+                             onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/myphoto.png') }}';">
+                        
                         <span class="fw-bold">{{ item.name }}</span>
                     </div>
                 </td>
@@ -52,16 +46,16 @@
         </tbody>
     </table>
 
-    <div class="checkout-area text-end mt-4">
-        <h4 class="fw-bold">Total: ${{ "%.2f" | format(total_price) }}</h4>
-         <div class="checkout-area">
-        <p class="total-price">Order Total: **${{ "%.2f" | format(total_price) }}**</p>
+    <div class="checkout-area">
+        <p class="total-price">Order Total: <b>${{ "%.2f" | format(total_price) }}</b></p>
         <button class="checkout-button">Proceed to Checkout</button>
     </div>
-    {% else %}
-    <div class="empty-cart-message">
+</div>
+
+{% else %}
+    <div class="empty-cart-message text-center mt-4">
         <p>Your cart is currently empty. <a href="{{ url_for('index') }}" class="small-blue-link">Start Shopping!</a></p>
     </div>
-    {% endif %}
+{% endif %}
 
 {% endblock %}

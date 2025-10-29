@@ -1,120 +1,70 @@
 {% extends "base.html" %}
-{% block title %}Account Profile{% endblock %}
+
+{% block title %}My Account{% endblock %}
+
 {% block content %}
 
-<div class="profile-page">
-  <h2>Account Profile</h2>
-
-  <!-- Edit button at top -->
-  <div class="top-controls">
-    <a href="#" class="edit-link" onclick="enableAllEdit()">✏️ Edit Profile</a>
-  </div>
-
-  <form method="POST" action="{{ url_for('profile') }}" id="profileForm">
-    <!-- Personal Info -->
-    <div class="section">
-      <h3>Personal Information</h3>
-      <div class="input-row">
-        <input type="text" name="first_name" value="{{ user.first_name or '' }}" placeholder="First Name" disabled>
-        <input type="text" name="last_name" value="{{ user.last_name or '' }}" placeholder="Last Name" disabled>
-      </div>
-
-      <div class="gender-row">
-        <label>Your Gender</label>
-        <div class="radio-group">
-          <label><input type="radio" name="gender" value="Male" {% if user.gender=='Male' %}checked{% endif %} disabled> Male</label>
-          <label><input type="radio" name="gender" value="Female" {% if user.gender=='Female' %}checked{% endif %} disabled> Female</label>
+<div class="account-container">
+    
+    <aside class="sidebar">
+        <div class="profile-card">
+            <img src="https://cdn-icons-png.flaticon.com/512/219/219969.png" alt="Profile">
+            <h6>Hello,</h6>
+            <strong>{{ user.username }}</strong>
         </div>
-      </div>
-    </div>
 
-    <!-- Email -->
-    <div class="section">
-      <h3>Email Address</h3>
-      <input type="email" name="email" id="email" value="{{ user.email or '' }}" disabled>
-    </div>
+        <div class="menu-section">
+            <h6>My Orders</h6>
+            <a href="#">Order History</a>
+            <a href="#">Track Orders</a>
+        </div>
 
-    <!-- Mobile -->
-    <div class="section">
-      <h3>Mobile Number</h3>
-      <input type="text" name="mobile" id="mobile" value="{{ user.mobile or '' }}" disabled>
-    </div>
+        <div class="menu-section">
+            <h6>Account Settings</h6>
+            <a href="#">Profile Information</a>
+            <a href="#">Manage Addresses</a>
+            <a href="#">Billing Details</a>
+        </div>
 
-    <button type="submit" class="save-btn" id="saveBtn" style="display:none;">💾 Save Changes</button>
-  </form>
+        <div class="menu-section">
+            <h6>My Stuff</h6>
+            <a href="#">My Coupons</a>
+            <a href="#">My Reviews & Ratings</a>
+            <a href="{{ url_for('cart') }}">My Cart</a>
+        </div>
+        
+        <a href="{{ url_for('logout') }}" class="logout-btn-link">
+            <button class="logout-btn">
+                <b>Logout</b>
+            </button>
+        </a>
+    </aside>
 
-  <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+    <main class="profile-content">
+        <div class="section">
+            <h5>Personal Information
+                </h5>
+            <div class="info">
+                <p><strong>Name:</strong> {{ user.username }}</p>
+                <p><strong>Email:</strong> {{ user.email }}</p>
+                <p><strong>Phone:</strong> (Add to User model to enable)</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h5>Billing Details
+                </h5>
+            <div class="info">
+                <p><strong>UPI:</strong> (Add to User model to enable)</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h5>My Orders</h5>
+            <div class="info">
+                <p>You have 0 active orders.</p>
+            </div>
+        </div>
+    </main>
 </div>
-
-<!-- JS for enabling all fields -->
-<script>
-function enableAllEdit() {
-  document.querySelectorAll('#profileForm input').forEach(el => el.removeAttribute('disabled'));
-  document.getElementById('saveBtn').style.display = 'block';
-}
-</script>
-
-<style>
-.profile-page {
-  width: 60%;
-  margin: 40px auto;
-  background: #fff;
-  border-radius: 12px;
-  padding: 30px 40px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  font-family: 'Segoe UI', sans-serif;
-}
-.top-controls {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 10px;
-}
-.edit-link {
-  color: #1a73e8;
-  font-weight: 500;
-  text-decoration: none;
-  cursor: pointer;
-}
-.section {
-  margin-bottom: 25px;
-}
-.input-row {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-.input-row input {
-  flex: 1;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  background: #f8f8f8;
-}
-.gender-row {
-  margin-top: 15px;
-}
-.radio-group label {
-  margin-right: 15px;
-  font-size: 14px;
-}
-.save-btn {
-  margin-top: 20px;
-  background-color: #1a73e8;
-  color: #fff;
-  border: none;
-  padding: 10px 25px;
-  border-radius: 6px;
-  font-size: 15px;
-  cursor: pointer;
-}
-.logout-btn {
-  display: block;
-  margin-top: 25px;
-  text-align: center;
-  color: #d93025;
-  text-decoration: none;
-  font-weight: bold;
-}
-</style>
-
 {% endblock %}
