@@ -7,11 +7,24 @@
 <div class="account-container">
     
     <aside class="sidebar">
-        <div class="profile-card">
-            <img src="https://cdn-icons-png.flaticon.com/512/219/219969.png" alt="Profile">
-            <h6>Hello,</h6>
-            <strong>{{ user.username }}</strong>
-        </div>
+       <div class="profile-card">
+    
+    {% if user.profile_image %}
+        <img src="{{ url_for('static', filename='uploads/' + user.profile_image) }}" alt="Profile"
+             style="height: 80px; width: 80px; object-fit: cover;">
+             
+    {% elif user.gender == 'male' %}
+        <img src="https://cdn-icons-png.flaticon.com/512/219/219969.png" alt="Male Profile">
+        
+    {% elif user.gender == 'female' %}
+        <img src="https://cdn-icons-png.flaticon.com/512/219/219970.png" alt="Female Profile">
+        
+    {% else %}
+        <img src="https://cdn-icons-png.flaticon.com/512/1077/1077114.png" alt="Default Profile">
+    {% endif %}
+    <h6>Hello,</h6>
+    <strong>{{ user.username }}</strong>
+</div>
 
         <div class="menu-section">
             <h6>My Orders</h6>
@@ -41,15 +54,17 @@
     </aside>
 
     <main class="profile-content">
-        <div class="section">
-            <h5>Personal Information
-                </h5>
-            <div class="info">
-                <p><strong>Name:</strong> {{ user.username }}</p>
-                <p><strong>Email:</strong> {{ user.email }}</p>
-                <p><strong>Phone:</strong> (Add to User model to enable)</p>
-            </div>
+    <div class="section">
+        <h5>Personal Information
+            <a href="{{ url_for('profile_edit') }}" class="edit-btn">Edit</a>
+            </h5>
+        <div class="info">
+            <p><strong>Name:</strong> {{ user.username }}</p>
+            <p><strong>Email:</strong> {{ user.email }}</p>
+            <p><strong>Gender:</strong> {{ user.gender.capitalize() if user.gender else 'Not set' }}</p>
         </div>
+    </div>
+    ...
 
         <div class="section">
             <h5>Billing Details

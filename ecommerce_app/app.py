@@ -3,10 +3,17 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import json
 from functools import wraps # For our @admin_required decorator
+import os  # <-- For file paths
+from werkzeug.utils import secure_filename # <-- For secure file uploads
 
 app = Flask(__name__)
 app.secret_key = 'your_super_secret_key_here'
 DEFAULT_PORT = 5001
+
+# --- File Upload Configuration ---
+UPLOAD_FOLDER = 'static/uploads'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # --- Database Configuration ---
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///store.db'
@@ -23,8 +30,8 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128))
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
-    # Added gender field
     gender = db.Column(db.String(10), nullable=True) 
+    profile_image = db.Column(db.String(100), nullable=True, default=None)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -61,23 +68,28 @@ def admin_required(f):
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # 1. Check if user is logged in
         if 'user_id' not in session:
             flash("You must be logged in to view this page.", "error")
             return redirect(url_for('login'))
         
-        # 2. Get user from database
-        user_id = session['user_id']
-        user = User.query.get(user_id)
+        user = User.query.get(session['user_id'])
         
-        # 3. Check if user is an admin
         if not user or not user.is_admin:
             flash("You do not have permission to access this page.", "error")
-            return redirect(url_for('index')) # Redirect non-admins to homepage
+            return redirect(url_for('index'))
         
-        # 4. If all checks pass, run the original route function
         return f(*args, **kwargs)
     return decorated_function
+
+
+# =================================================================
+# --- HELPER FUNCTIONS ---
+# =================================================================
+
+def allowed_file(filename):
+    """Checks if a filename's extension is allowed."""
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 # =================================================================
@@ -86,7 +98,6 @@ def admin_required(f):
 
 @app.route('/')
 def index():
-    # Read products from the database
     products = Product.query.all()
     return render_template('index.html', products=products)
 
@@ -96,7 +107,6 @@ def add_to_cart_check(product_id):
         flash("Please log in to add items to your cart.", "info")
         return redirect(url_for('login'))
 
-    # Check if product exists in the database
     product = Product.query.get(product_id)
     if not product:
         flash("Invalid product ID.", "error")
@@ -126,7 +136,6 @@ def remove_from_cart(product_id):
         del session['cart'][product_key]
     
     session.modified = True
-    
     product = Product.query.get(product_id)
     product_name = product.name if product else "Item"
     
@@ -145,7 +154,7 @@ def cart():
 
     for product_id_str, quantity in cart_data.items():
         product_id = int(product_id_str)
-        product = Product.query.get(product_id) # Get product details from DB
+        product = Product.query.get(product_id)
 
         if product and quantity > 0:
             subtotal = product.price * quantity
@@ -172,21 +181,16 @@ def login():
             user = User.query.filter_by(username=username).first()
             
             if user and user.check_password(password):
-                # Login success
                 session['user_id'] = user.id
                 session['user_username'] = user.username
-                # *** ADDED THIS LINE to save admin status to session ***
                 session['is_admin'] = user.is_admin 
-                
                 flash(f"Welcome back, {user.username}!", "success")
                 return redirect(url_for('profile'))
             else:
-                # Login failed
                 return render_template('login.html', error="Invalid username or password.")
 
         elif action == 'register':
             email = request.form.get('email')
-            # *** ADDED THIS LINE to get gender from form ***
             gender = request.form.get('gender') 
             
             if User.query.filter_by(username=username).first():
@@ -194,17 +198,15 @@ def login():
             if User.query.filter_by(email=email).first():
                 return render_template('login.html', error="Email already registered.")
             
-            # *** UPDATED THIS LINE to include gender ***
             new_user = User(username=username, email=email, gender=gender, is_admin=False)
             new_user.set_password(password)
             
             db.session.add(new_user)
             db.session.commit()
             
-            # Log in the new user immediately
             session['user_id'] = new_user.id
             session['user_username'] = new_user.username
-            session['is_admin'] = new_user.is_admin # This will be False
+            session['is_admin'] = new_user.is_admin
             
             flash("Account created successfully! You are now logged in.", "success")
             return redirect(url_for('profile'))
@@ -216,9 +218,7 @@ def logout():
     session.pop('user_id', None)
     session.pop('user_username', None)
     session.pop('cart', None)
-    # *** ADDED THIS LINE to clear admin status on logout ***
     session.pop('is_admin', None) 
-    
     flash("You have been logged out.", "info")
     return redirect(url_for('index'))
 
@@ -237,6 +237,44 @@ def profile():
 
     return render_template('profile.html', user=user)
 
+# --- NEW ROUTE FOR EDITING PROFILE ---
+@app.route('/profile/edit', methods=['GET', 'POST'])
+def profile_edit():
+    if 'user_id' not in session:
+        flash("Please log in to access this page.", "info")
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+    
+    if request.method == 'POST':
+        # --- Handle Gender Update ---
+        new_gender = request.form.get('gender')
+        if new_gender:
+            user.gender = new_gender
+
+        # --- Handle File Upload ---
+        if 'profile_pic' in request.files:
+            file = request.files['profile_pic']
+            
+            if file.filename != '' and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                unique_filename = f"user_{user.id}_{filename}"
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                
+                file.save(filepath)
+                user.profile_image = unique_filename
+                
+            elif file.filename != '' and not allowed_file(file.filename):
+                flash('File type not allowed. Please upload .png, .jpg, .jpeg, or .gif', 'error')
+
+        # --- Save changes to DB ---
+        db.session.commit()
+        flash('Profile updated successfully!', 'success')
+        return redirect(url_for('profile'))
+
+    # GET request: Show the edit form
+    return render_template('profile_edit.html', user=user)
+
 
 # =================================================================
 # --- ADMIN ROUTES ---
@@ -245,18 +283,12 @@ def profile():
 @app.route('/admin')
 @admin_required
 def admin_dashboard():
-    """
-    Shows the main admin dashboard with a list of all products.
-    """
     products = Product.query.order_by(Product.id).all()
     return render_template('admin_dashboard.html', products=products)
 
 @app.route('/admin/add', methods=['GET', 'POST'])
 @admin_required
 def admin_add_product():
-    """
-    Handles adding a new product to the database.
-    """
     if request.method == 'POST':
         name = request.form.get('name')
         price_str = request.form.get('price')
@@ -285,15 +317,11 @@ def admin_add_product():
         flash(f"Product '{name}' added successfully!", "success")
         return redirect(url_for('admin_dashboard'))
     
-    # GET request: show the blank form
     return render_template('admin_form.html', title="Add New Product", product={})
 
 @app.route('/admin/edit/<int:product_id>', methods=['GET', 'POST'])
 @admin_required
 def admin_edit_product(product_id):
-    """
-    Handles editing an existing product.
-    """
     product = Product.query.get(product_id)
     if not product:
         flash("Product not found.", "error")
@@ -309,15 +337,11 @@ def admin_edit_product(product_id):
         flash(f"Product '{product.name}' updated successfully!", "success")
         return redirect(url_for('admin_dashboard'))
     
-    # GET request: show the form pre-filled
     return render_template('admin_form.html', title="Edit Product", product=product)
 
 @app.route('/admin/delete/<int:product_id>')
 @admin_required
 def admin_delete_product(product_id):
-    """
-    Deletes a product from the database.
-    """
     product = Product.query.get(product_id)
     if product:
         product_name = product.name

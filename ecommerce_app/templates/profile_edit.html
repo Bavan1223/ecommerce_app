@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Your Profile{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="login-card" style="max-width: none; text-align: left;">
+                <h2 class="mb-4">Edit Your Profile</h2>
+
+                <form method="POST" enctype="multipart/form-data">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Gender</label>
+                        <div>
+                            <input type="radio" id="gender-male" name="gender" value="male" 
+                                   {% if user.gender == 'male' %}checked{% endif %}>
+                            <label for="gender-male" style="font-weight: normal; margin-right: 15px;">Male</label>
+                            
+                            <input type="radio" id="gender-female" name="gender" value="female"
+                                   {% if user.gender == 'female' %}checked{% endif %}>
+                            <label for="gender-female" style="font-weight: normal; margin-right: 15px;">Female</label>
+                            
+                            <input type="radio" id="gender-other" name="gender" value="other"
+                                   {% if user.gender == 'other' %}checked{% endif %}>
+                            <label for="gender-other" style="font-weight: normal;">Other / Prefer not to say</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="profile_pic" class="form-label">Change Profile Picture</label>
+                        <input type="file" class="form-control" id="profile_pic" name="profile_pic">
+                        <div class="form-text">Upload a .png, .jpg, or .gif from your local drive.</div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a href="{{ url_for('profile') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

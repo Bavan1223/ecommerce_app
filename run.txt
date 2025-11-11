@@ -1,0 +1,7 @@
+flask --app app.py shell
+
+from app import db, User
+user = User.query.filter_by(username="BAVAN").first()
+user.is_admin = True
+db.session.commit()
+exit()
