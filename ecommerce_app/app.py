@@ -25,22 +25,11 @@ if database_url:
          database_url = database_url.replace("postgres://", "postgresql://", 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 else:
-# Get the database URL from the environment variable (Render sets this)
-   database_url = os.environ.get('DATABASE_URL')
-
-if database_url:
-    # On Render, the free Postgres DB might require this SSL setting
-    if "postgres://" in database_url:
-         database_url = database_url.replace("postgres://", "postgresql://", 1)
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-else:
     # This will run on your local PC
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///store.db'
 
-# THIS IS THE FIX: 'db' is now outside the if/else block
-db = SQLAlchemy(app)
 # --- ✅ THIS IS THE FIX ---
-# 'db = SQLAlchemy(app)' MUST be after the config and OUTSIDE the if/else
+# 'db = SQLAlchemy(app)' is now here ONCE, after the if/else block
 db = SQLAlchemy(app)
 
 
