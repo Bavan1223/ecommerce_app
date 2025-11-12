@@ -16,8 +16,16 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # --- Database Configuration ---
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///store.db'
-db = SQLAlchemy(app)
+# Get the database URL from the environment variable (Render sets this)
+# If it's not set, fall back to the local sqlite database for testing
+database_url = os.environ.get('DATABASE_URL')
+if database_url:
+    # On Render, the free Postgres DB might require this SSL setting
+    if "postgres://" in database_url:
+         database_url = database_url.replace("postgres://", "postgresql://", 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///store.db'db = SQLAlchemy(app)
 
 
 # =================================================================
