@@ -16,8 +16,6 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # --- Database Configuration ---
-# Get the database URL from the environment variable (Render sets this)
-# If it's not set, fall back to the local sqlite database for testing
 database_url = os.environ.get('DATABASE_URL')
 if database_url:
     # On Render, the free Postgres DB might require this SSL setting
@@ -28,9 +26,19 @@ else:
     # This will run on your local PC
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///store.db'
 
-# --- ✅ THIS IS THE FIX ---
-# 'db = SQLAlchemy(app)' is now here ONCE, after the if/else block
-db = SQLAlchemy(app)
+# Initialize db ONCE, after the config
+db = SQLAlchemy(app) 
+
+# --- Product Data (For one-time DB population) ---
+# This must be defined *before* the auto-create logic
+PRODUCTS_DICT = {
+    1: {'id': 1, 'name': 'Wireless Headphones', 'price': 49.99, 'description': 'High-fidelity audio with active noise cancellation.', 'image_url': 'wirelessheadphone.jpeg'},
+    2: {'id': 2, 'name': 'Smart Watch X5', 'price': 199.00, 'description': 'Track your fitness, notifications, and sleep.', 'image_url': 'watch.jpg'},
+    3: {'id': 3, 'name': 'Ergonomic Keyboard', 'price': 75.50, 'description': 'Split design for comfortable, all-day typing.', 'image_url': 'keyboard.jpg'},
+    4: {'id': 4, 'name': '4K LED Monitor 32"', 'price': 349.99, 'description': 'Stunning clarity for work and gaming.', 'image_url': 'monitor.jpg'},
+    5: {'id': 5, 'name': 'Portable Power Bank', 'price': 25.00, 'description': 'Keep your devices charged on the go.', 'image_url': 'powerbank.jpg'},
+    6: {'id': 6, 'name': 'Webcam HD 1080p', 'price': 39.99, 'description': 'Crystal clear video calls and streaming.', 'image_url': 'webcam.jpg'}
+}
 
 
 # =================================================================
@@ -59,15 +67,28 @@ class Product(db.Model):
     description = db.Column(db.Text, nullable=True)
     image_url = db.Column(db.String(100), nullable=False, default='myphoto.png')
 
-# --- Product Data (For one-time DB population) ---
-PRODUCTS_DICT = {
-    1: {'id': 1, 'name': 'Wireless Headphones', 'price': 49.99, 'description': 'High-fidelity audio with active noise cancellation.', 'image_url': 'wirelessheadphone.jpeg'},
-    2: {'id': 2, 'name': 'Smart Watch X5', 'price': 199.00, 'description': 'Track your fitness, notifications, and sleep.', 'image_url': 'watch.jpg'},
-    3: {'id': 3, 'name': 'Ergonomic Keyboard', 'price': 75.50, 'description': 'Split design for comfortable, all-day typing.', 'image_url': 'keyboard.jpg'},
-    4: {'id': 4, 'name': '4K LED Monitor 32"', 'price': 349.99, 'description': 'Stunning clarity for work and gaming.', 'image_url': 'monitor.jpg'},
-    5: {'id': 5, 'name': 'Portable Power Bank', 'price': 25.00, 'description': 'Keep your devices charged on the go.', 'image_url': 'powerbank.jpg'},
-    6: {'id': 6, 'name': 'Webcam HD 1080p', 'price': 39.99, 'description': 'Crystal clear video calls and streaming.', 'image_url': 'webcam.jpg'}
-}
+
+# --- ✅ NEW: Auto-create and populate tables (Render Free Tier fix) ---
+with app.app_context():
+    db.create_all()
+    
+    # --- Auto-populate products if the table is new ---
+    if Product.query.first() is None:
+        print("Populating products...")
+        for prod_id, prod_data in PRODUCTS_DICT.items():
+            new_product = Product(
+                id=prod_data['id'],
+                name=prod_data['name'],
+                price=prod_data['price'],
+                description=prod_data['description'],
+                image_url=prod_data['image_url']
+            )
+            db.session.add(new_product)
+        db.session.commit()
+        print("Database initialized and products populated.")
+    else:
+        print("Database already contains products.")
+# -----------------------------------------------------------------
 
 
 # =================================================================
@@ -368,30 +389,8 @@ def admin_delete_product(product_id):
 
 
 # =================================================================
-# --- DB INIT COMMAND & APP STARTUP ---
+# --- APP STARTUP ---
 # =================================================================
-
-@app.cli.command('init-db')
-def init_db_command():
-    """Creates the database tables and populates them with initial products."""
-    with app.app_context():
-        db.create_all()
-        
-        if Product.query.first() is None:
-            print("Populating products...")
-            for prod_id, prod_data in PRODUCTS_DICT.items():
-                new_product = Product(
-                    id=prod_data['id'],
-                    name=prod_data['name'],
-                    price=prod_data['price'],
-                    description=prod_data['description'],
-                    image_url=prod_data['image_url']
-                )
-                db.session.add(new_product)
-            db.session.commit()
-            print("Database initialized and products populated.")
-        else:
-            print("Database already initialized.")
 
 if __name__ == '__main__':
     # Get port from environment variable, default to 5001 for local
