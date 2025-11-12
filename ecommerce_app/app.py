@@ -25,7 +25,11 @@ if database_url:
          database_url = database_url.replace("postgres://", "postgresql://", 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///store.db'db = SQLAlchemy(app)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///store.db'
+
+# --- ✅ THIS IS THE FIX ---
+# 'db = SQLAlchemy(app)' MUST be after the config and OUTSIDE the if/else
+db = SQLAlchemy(app)
 
 
 # =================================================================
@@ -389,4 +393,7 @@ def init_db_command():
             print("Database already initialized.")
 
 if __name__ == '__main__':
-    app.run(debug=True, port=DEFAULT_PORT)
+    # Get port from environment variable, default to 5001 for local
+    port = int(os.environ.get('PORT', DEFAULT_PORT))
+    # Run on 0.0.0.0 to be accessible. 
+    app.run(debug=False, host='0.0.0.0', port=port)
