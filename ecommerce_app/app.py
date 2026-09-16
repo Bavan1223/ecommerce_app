@@ -5,6 +5,11 @@ import json
 from functools import wraps # For our @admin_required decorator
 import os  # <-- For file paths
 from werkzeug.utils import secure_filename # <-- For secure file uploads
+try:
+    from ecommerce_app import firebase_service, cloudinary_service
+except ImportError:
+    import firebase_service
+    import cloudinary_service
 
 app = Flask(__name__)
 app.secret_key = 'your_super_secret_key_here'
@@ -68,6 +73,76 @@ class Product(db.Model):
     image_url = db.Column(db.String(100), nullable=False, default='myphoto.png')
 
 
+from datetime import datetime
+
+class Order(db.Model):
+    __tablename__ = 'orders'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    full_name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(120), nullable=False)
+    phone = db.Column(db.String(25), nullable=False)
+    address = db.Column(db.String(250), nullable=False)
+    city = db.Column(db.String(100), nullable=False)
+    state = db.Column(db.String(100), nullable=False)
+    zip_code = db.Column(db.String(20), nullable=False)
+    subtotal_amount = db.Column(db.Float, nullable=False, default=0.0)
+    discount_amount = db.Column(db.Float, nullable=False, default=0.0)
+    shipping_fee = db.Column(db.Float, nullable=False, default=0.0)
+    total_amount = db.Column(db.Float, nullable=False)
+    coupon_code = db.Column(db.String(50), nullable=True)
+    payment_method = db.Column(db.String(50), nullable=False, default='cod')
+    payment_status = db.Column(db.String(50), nullable=False, default='Pending')
+    order_status = db.Column(db.String(50), nullable=False, default='Processing')
+    notes = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('orders', lazy=True, cascade="all, delete-orphan"))
+    items = db.relationship('OrderItem', backref='order', lazy=True, cascade="all, delete-orphan")
+
+class OrderItem(db.Model):
+    __tablename__ = 'order_items'
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('orders.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=True)
+    product_name = db.Column(db.String(100), nullable=False)
+    product_price = db.Column(db.Float, nullable=False)
+    quantity = db.Column(db.Integer, nullable=False, default=1)
+    subtotal = db.Column(db.Float, nullable=False)
+    image_url = db.Column(db.String(100), nullable=True, default='myphoto.png')
+
+    product = db.relationship('Product', backref='order_items', lazy=True)
+
+
+# --- Supported Coupon Codes ---
+COUPONS = {
+    'SAVE10': {'code': 'SAVE10', 'discount_percent': 10, 'description': '10% off entire order'},
+    'SAVE20': {'code': 'SAVE20', 'discount_percent': 20, 'description': '20% off entire order'},
+    'TECHMART50': {'code': 'TECHMART50', 'discount_flat': 50.0, 'description': '$50 flat discount on orders over $150', 'min_spend': 150.0},
+    'FREESHIP': {'code': 'FREESHIP', 'free_shipping': True, 'description': 'Free express shipping'}
+}
+
+
+# --- Context Processor to expose cart count and active user to all templates ---
+@app.context_processor
+def inject_global_vars():
+    cart_count = 0
+    if 'cart' in session:
+        for qty in session['cart'].values():
+            try:
+                cart_count += int(qty)
+            except (ValueError, TypeError):
+                pass
+    current_user = None
+    if 'user_id' in session:
+        current_user = User.query.get(session['user_id'])
+    return {
+        'cart_count': cart_count,
+        'current_user': current_user,
+        'active_coupons': COUPONS
+    }
+
+
 # --- ✅ NEW: Auto-create and populate tables (Render Free Tier fix) ---
 with app.app_context():
     db.create_all()
@@ -125,6 +200,59 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def calculate_cart_totals(cart_data, coupon_code=None):
+    """Calculate cart items, subtotal, discount, shipping, and grand total."""
+    cart_items = []
+    subtotal = 0.0
+
+    for product_id_str, quantity in cart_data.items():
+        try:
+            product_id = int(product_id_str)
+            quantity = int(quantity)
+        except (ValueError, TypeError):
+            continue
+
+        if quantity <= 0:
+            continue
+
+        product = Product.query.get(product_id)
+        if product:
+            item_subtotal = round(product.price * quantity, 2)
+            cart_items.append({
+                'id': product.id,
+                'name': product.name,
+                'price': product.price,
+                'quantity': quantity,
+                'subtotal': item_subtotal,
+                'image_url': product.image_url
+            })
+            subtotal += item_subtotal
+
+    subtotal = round(subtotal, 2)
+    shipping_fee = 0.0 if (subtotal >= 100.0 or subtotal == 0) else 9.99
+    discount = 0.0
+
+    if coupon_code and coupon_code in COUPONS:
+        c = COUPONS[coupon_code]
+        if 'min_spend' in c and subtotal < c['min_spend']:
+            discount = 0.0
+        elif 'discount_percent' in c:
+            discount = round(subtotal * (c['discount_percent'] / 100.0), 2)
+        elif 'discount_flat' in c:
+            discount = round(min(subtotal, c['discount_flat']), 2)
+        elif c.get('free_shipping'):
+            shipping_fee = 0.0
+
+    total = round(max(0.0, subtotal - discount + shipping_fee), 2)
+    return {
+        'cart_items': cart_items,
+        'subtotal': subtotal,
+        'discount': discount,
+        'shipping_fee': shipping_fee,
+        'total': total,
+        'coupon_code': coupon_code
+    }
+
 
 # =================================================================
 # --- USER ROUTES ---
@@ -155,26 +283,91 @@ def add_to_cart_check(product_id):
     session.modified = True
 
     flash(f"'{product.name}' added to cart!", "success")
-    return redirect(url_for('index'))
+    return redirect(url_for('cart'))
+
+@app.route('/cart/update/<int:product_id>/<action>')
+def cart_update_quantity(product_id, action):
+    if 'user_id' not in session:
+        flash("Please log in to modify your cart.", "info")
+        return redirect(url_for('login'))
+
+    if 'cart' not in session:
+        session['cart'] = {}
+
+    product_key = str(product_id)
+    product = Product.query.get(product_id)
+    prod_name = product.name if product else "Product"
+
+    if action == 'increase':
+        session['cart'][product_key] = session['cart'].get(product_key, 0) + 1
+        flash(f"Increased quantity of '{prod_name}'.", "success")
+    elif action == 'decrease':
+        if product_key in session['cart']:
+            session['cart'][product_key] -= 1
+            if session['cart'][product_key] <= 0:
+                del session['cart'][product_key]
+                flash(f"Removed '{prod_name}' from cart.", "info")
+            else:
+                flash(f"Decreased quantity of '{prod_name}'.", "info")
+    elif action == 'delete':
+        if product_key in session['cart']:
+            del session['cart'][product_key]
+            flash(f"Removed '{prod_name}' from cart.", "info")
+
+    session.modified = True
+    return redirect(url_for('cart'))
+
+@app.route('/cart/clear')
+def cart_clear():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    session['cart'] = {}
+    session.pop('applied_coupon', None)
+    session.modified = True
+    flash("Your shopping cart has been cleared.", "info")
+    return redirect(url_for('cart'))
 
 @app.route('/remove_from_cart/<int:product_id>')
 def remove_from_cart(product_id):
-    if 'cart' not in session or str(product_id) not in session['cart']:
-        flash("Item not found in cart.", "error")
-        return redirect(url_for('cart'))
+    return redirect(url_for('cart_update_quantity', product_id=product_id, action='delete'))
 
-    product_key = str(product_id)
-    session['cart'][product_key] -= 1
+@app.route('/apply_coupon', methods=['POST'])
+def apply_coupon():
+    if 'user_id' not in session:
+        flash("Please log in to apply discounts.", "info")
+        return redirect(url_for('login'))
 
-    if session['cart'][product_key] <= 0:
-        del session['cart'][product_key]
-    
+    code = request.form.get('coupon_code', '').strip().upper()
+    next_page = request.form.get('next', 'cart')
+
+    if not code:
+        flash("Please enter a coupon code.", "error")
+        return redirect(url_for(next_page))
+
+    if code in COUPONS:
+        cart_data = session.get('cart', {})
+        totals = calculate_cart_totals(cart_data)
+        coupon_data = COUPONS[code]
+
+        if 'min_spend' in coupon_data and totals['subtotal'] < coupon_data['min_spend']:
+            flash(f"Coupon '{code}' requires a minimum spend of ${coupon_data['min_spend']:.2f}.", "error")
+            return redirect(url_for(next_page))
+
+        session['applied_coupon'] = code
+        session.modified = True
+        flash(f"Coupon '{code}' applied successfully! {coupon_data['description']}", "success")
+    else:
+        flash(f"Invalid coupon code '{code}'. Try SAVE10 or SAVE20.", "error")
+
+    return redirect(url_for(next_page))
+
+@app.route('/remove_coupon', methods=['POST'])
+def remove_coupon():
+    next_page = request.form.get('next', 'cart')
+    session.pop('applied_coupon', None)
     session.modified = True
-    product = Product.query.get(product_id)
-    product_name = product.name if product else "Item"
-    
-    flash(f"Removed one '{product_name}' from cart.", "info")
-    return redirect(url_for('cart'))
+    flash("Coupon removed.", "info")
+    return redirect(url_for(next_page))
 
 @app.route('/cart')
 def cart():
@@ -183,26 +376,175 @@ def cart():
         return redirect(url_for('login'))
 
     cart_data = session.get('cart', {})
-    cart_items = []
-    total_price = 0.0
+    coupon_code = session.get('applied_coupon')
+    calc = calculate_cart_totals(cart_data, coupon_code)
 
-    for product_id_str, quantity in cart_data.items():
-        product_id = int(product_id_str)
-        product = Product.query.get(product_id)
+    return render_template(
+        'cart.html',
+        cart_items=calc['cart_items'],
+        subtotal=calc['subtotal'],
+        discount=calc['discount'],
+        shipping_fee=calc['shipping_fee'],
+        total_price=calc['total'],
+        applied_coupon=coupon_code,
+        coupons_list=COUPONS
+    )
 
-        if product and quantity > 0:
-            subtotal = product.price * quantity
-            cart_items.append({
-                'id': product_id,
-                'name': product.name,
-                'price': product.price,
-                'quantity': quantity,
-                'subtotal': subtotal,
-                'image_url': product.image_url
+@app.route('/checkout', methods=['GET', 'POST'])
+def checkout():
+    if 'user_id' not in session:
+        flash("Please log in to proceed to checkout.", "info")
+        return redirect(url_for('login'))
+
+    cart_data = session.get('cart', {})
+    coupon_code = session.get('applied_coupon')
+    calc = calculate_cart_totals(cart_data, coupon_code)
+
+    if not calc['cart_items']:
+        flash("Your cart is empty. Add products before checking out.", "info")
+        return redirect(url_for('index'))
+
+    user = User.query.get(session['user_id'])
+
+    if request.method == 'POST':
+        full_name = request.form.get('full_name', '').strip()
+        email = request.form.get('email', '').strip()
+        phone = request.form.get('phone', '').strip()
+        address = request.form.get('address', '').strip()
+        city = request.form.get('city', '').strip()
+        state = request.form.get('state', '').strip()
+        zip_code = request.form.get('zip_code', '').strip()
+        payment_method = request.form.get('payment_method', 'cod')
+        notes = request.form.get('notes', '').strip()
+
+        if not all([full_name, email, phone, address, city, state, zip_code]):
+            flash("Please fill in all required shipping address fields.", "error")
+            return render_template('checkout.html', user=user, calc=calc)
+
+        # Determine payment status
+        if payment_method == 'cod':
+            payment_status = 'Cash on Delivery'
+        elif payment_method == 'upi':
+            payment_status = 'Paid via UPI'
+        elif payment_method == 'card':
+            payment_status = 'Paid via Card'
+        else:
+            payment_status = 'Pending'
+
+        # Create Order
+        new_order = Order(
+            user_id=user.id,
+            full_name=full_name,
+            email=email,
+            phone=phone,
+            address=address,
+            city=city,
+            state=state,
+            zip_code=zip_code,
+            subtotal_amount=calc['subtotal'],
+            discount_amount=calc['discount'],
+            shipping_fee=calc['shipping_fee'],
+            total_amount=calc['total'],
+            coupon_code=coupon_code,
+            payment_method=payment_method,
+            payment_status=payment_status,
+            order_status='Processing',
+            notes=notes
+        )
+        db.session.add(new_order)
+        db.session.flush() # Populate new_order.id
+
+        # Create Order Items
+        for item in calc['cart_items']:
+            order_item = OrderItem(
+                order_id=new_order.id,
+                product_id=item['id'],
+                product_name=item['name'],
+                product_price=item['price'],
+                quantity=item['quantity'],
+                subtotal=item['subtotal'],
+                image_url=item['image_url']
+            )
+            db.session.add(order_item)
+
+        db.session.commit()
+
+        # Prepare items for Firestore
+        firestore_items = []
+        for item in calc['cart_items']:
+            firestore_items.append({
+                'product_id': item['id'],
+                'product_name': item['name'],
+                'product_price': item['price'],
+                'quantity': item['quantity'],
+                'subtotal': item['subtotal'],
+                'image_url': item['image_url']
             })
-            total_price += subtotal
 
-    return render_template('cart.html', cart_items=cart_items, total_price=total_price)
+        # Sync order to Firestore
+        firebase_service.sync_order_to_firestore({
+            'id': new_order.id,
+            'user_id': new_order.user_id,
+            'full_name': new_order.full_name,
+            'email': new_order.email,
+            'phone': new_order.phone,
+            'address': new_order.address,
+            'city': new_order.city,
+            'state': new_order.state,
+            'zip_code': new_order.zip_code,
+            'subtotal_amount': new_order.subtotal_amount,
+            'discount_amount': new_order.discount_amount,
+            'shipping_fee': new_order.shipping_fee,
+            'total_amount': new_order.total_amount,
+            'coupon_code': new_order.coupon_code,
+            'payment_method': new_order.payment_method,
+            'payment_status': new_order.payment_status,
+            'order_status': new_order.order_status
+        }, firestore_items)
+
+        # Clear cart and applied coupon
+        session['cart'] = {}
+        session.pop('applied_coupon', None)
+        session.modified = True
+
+        flash("🎉 Your order has been placed successfully!", "success")
+        return redirect(url_for('order_confirmation', order_id=new_order.id))
+
+    return render_template('checkout.html', user=user, calc=calc)
+
+@app.route('/order/confirmation/<int:order_id>')
+def order_confirmation(order_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    order = Order.query.get_or_404(order_id)
+    if order.user_id != session['user_id'] and not session.get('is_admin'):
+        flash("You do not have access to this order.", "error")
+        return redirect(url_for('index'))
+
+    return render_template('order_confirmation.html', order=order)
+
+@app.route('/orders')
+def user_orders():
+    if 'user_id' not in session:
+        flash("Please log in to view your orders.", "info")
+        return redirect(url_for('login'))
+
+    orders = Order.query.filter_by(user_id=session['user_id']).order_by(Order.created_at.desc()).all()
+    return render_template('orders.html', orders=orders)
+
+@app.route('/order/<int:order_id>')
+def order_details(order_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    order = Order.query.get_or_404(order_id)
+    if order.user_id != session['user_id'] and not session.get('is_admin'):
+        flash("You do not have permission to view this order.", "error")
+        return redirect(url_for('index'))
+
+    return render_template('order_confirmation.html', order=order, is_detail_view=True)
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -237,6 +579,16 @@ def login():
             
             db.session.add(new_user)
             db.session.commit()
+            
+            # Sync to Firestore
+            firebase_service.create_user_firestore({
+                'id': new_user.id,
+                'username': new_user.username,
+                'email': new_user.email,
+                'gender': new_user.gender,
+                'is_admin': new_user.is_admin,
+                'profile_image': new_user.profile_image
+            })
             
             session['user_id'] = new_user.id
             session['user_username'] = new_user.username
@@ -291,18 +643,27 @@ def profile_edit():
             file = request.files['profile_pic']
             
             if file.filename != '' and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                unique_filename = f"user_{user.id}_{filename}"
-                filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-                
-                file.save(filepath)
-                user.profile_image = unique_filename
+                # Use Cloudinary with local fallback
+                uploaded_url = cloudinary_service.upload_profile_image(file, app.config['UPLOAD_FOLDER'])
+                if uploaded_url:
+                    user.profile_image = uploaded_url
                 
             elif file.filename != '' and not allowed_file(file.filename):
                 flash('File type not allowed. Please upload .png, .jpg, .jpeg, or .gif', 'error')
 
         # --- Save changes to DB ---
         db.session.commit()
+        
+        # Sync to Firestore
+        firebase_service.create_user_firestore({
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'gender': user.gender,
+            'is_admin': user.is_admin,
+            'profile_image': user.profile_image
+        })
+
         flash('Profile updated successfully!', 'success')
         return redirect(url_for('profile'))
 
@@ -348,6 +709,14 @@ def admin_add_product():
         db.session.add(new_product)
         db.session.commit()
         
+        firebase_service.sync_product_to_firestore({
+            'id': new_product.id,
+            'name': new_product.name,
+            'price': new_product.price,
+            'description': new_product.description,
+            'image_url': new_product.image_url
+        })
+        
         flash(f"Product '{name}' added successfully!", "success")
         return redirect(url_for('admin_dashboard'))
     
@@ -368,6 +737,15 @@ def admin_edit_product(product_id):
         product.image_url = request.form.get('image_url')
         
         db.session.commit()
+
+        firebase_service.sync_product_to_firestore({
+            'id': product.id,
+            'name': product.name,
+            'price': product.price,
+            'description': product.description,
+            'image_url': product.image_url
+        })
+
         flash(f"Product '{product.name}' updated successfully!", "success")
         return redirect(url_for('admin_dashboard'))
     
@@ -386,6 +764,33 @@ def admin_delete_product(product_id):
         flash("Product not found.", "error")
     
     return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/orders')
+@admin_required
+def admin_orders():
+    status_filter = request.args.get('status')
+    query = Order.query.order_by(Order.created_at.desc())
+    if status_filter:
+        query = query.filter_by(order_status=status_filter)
+    orders = query.all()
+    return render_template('admin_orders.html', orders=orders, current_filter=status_filter)
+
+@app.route('/admin/order/<int:order_id>/status', methods=['POST'])
+@admin_required
+def admin_update_order_status(order_id):
+    order = Order.query.get_or_404(order_id)
+    new_status = request.form.get('order_status')
+    payment_status = request.form.get('payment_status')
+
+    if new_status:
+        order.order_status = new_status
+    if payment_status:
+        order.payment_status = payment_status
+
+    db.session.commit()
+    flash(f"Order #{order.id} status updated to '{order.order_status}' (Payment: {order.payment_status}).", "success")
+    return redirect(url_for('admin_orders'))
+
 
 
 # =================================================================

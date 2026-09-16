@@ -28,21 +28,17 @@
 
         <div class="menu-section">
             <h6>My Orders</h6>
-            <a href="#">Order History</a>
-            <a href="#">Track Orders</a>
+            <a href="{{ url_for('user_orders') }}">Order History</a>
+            <a href="{{ url_for('user_orders') }}">Track Orders</a>
         </div>
 
         <div class="menu-section">
             <h6>Account Settings</h6>
-            <a href="#">Profile Information</a>
-            <a href="#">Manage Addresses</a>
-            <a href="#">Billing Details</a>
+            <a href="{{ url_for('profile_edit') }}">Edit Profile Information</a>
         </div>
 
         <div class="menu-section">
             <h6>My Stuff</h6>
-            <a href="#">My Coupons</a>
-            <a href="#">My Reviews & Ratings</a>
             <a href="{{ url_for('cart') }}">My Cart</a>
         </div>
         
@@ -57,29 +53,38 @@
     <div class="section">
         <h5>Personal Information
             <a href="{{ url_for('profile_edit') }}" class="edit-btn">Edit</a>
-            </h5>
+        </h5>
         <div class="info">
             <p><strong>Name:</strong> {{ user.username }}</p>
             <p><strong>Email:</strong> {{ user.email }}</p>
             <p><strong>Gender:</strong> {{ user.gender.capitalize() if user.gender else 'Not set' }}</p>
         </div>
     </div>
-    ...
 
-        <div class="section">
-            <h5>Billing Details
-                </h5>
-            <div class="info">
-                <p><strong>UPI:</strong> (Add to User model to enable)</p>
-            </div>
+    <div class="section">
+        <h5>Recent Orders
+            <a href="{{ url_for('user_orders') }}" class="edit-btn">View All</a>
+        </h5>
+        <div class="info">
+            {% if user.orders %}
+                <p>You have placed <strong>{{ user.orders|length }}</strong> order(s).</p>
+                <div class="list-group list-group-flush mt-2">
+                    {% for ord in user.orders[:3] %}
+                    <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>Order #{{ ord.id }}</strong>
+                            <small class="text-muted d-block">{{ ord.created_at.strftime('%b %d, %Y') }} • ${{ "%.2f" | format(ord.total_amount) }}</small>
+                        </div>
+                        <span class="badge bg-secondary">{{ ord.order_status }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted">You have 0 active orders. Ready to find something cool?</p>
+                <a href="{{ url_for('index') }}" class="btn btn-sm btn-primary mt-1">Start Shopping</a>
+            {% endif %}
         </div>
-
-        <div class="section">
-            <h5>My Orders</h5>
-            <div class="info">
-                <p>You have 0 active orders.</p>
-            </div>
-        </div>
+    </div>
     </main>
 </div>
 {% endblock %}

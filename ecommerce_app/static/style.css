@@ -613,3 +613,128 @@ footer {
     font-size: 1.2rem;
     color: #555;
 }
+
+/* ====================================
+    9. ADVANCED ECOMMERCE & CHECKOUT
+   ==================================== */
+
+/* Header Cart Badge */
+.cart-nav-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.cart-badge {
+    background-color: #ff3b30;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    margin-left: 6px;
+    line-height: 1;
+    display: inline-block;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.cart-badge.active {
+    background-color: #22c55e;
+    transform: scale(1.1);
+}
+
+/* Checkout Progress Steps */
+.checkout-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 10px 0;
+}
+
+.step-badge {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #888;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: #f1f3f5;
+}
+
+.step-badge.active {
+    background: #0d6efd;
+    color: white;
+    box-shadow: 0 4px 10px rgba(13, 110, 253, 0.25);
+}
+
+.step-badge.completed {
+    background: #e9ecef;
+    color: #198754;
+    font-weight: 700;
+}
+
+.step-divider {
+    flex: 1;
+    height: 3px;
+    background: #dee2e6;
+    margin: 0 10px;
+}
+
+.step-divider.active {
+    background: #0d6efd;
+}
+
+/* Payment Option Selection Box */
+.payment-option-box {
+    transition: all 0.2s ease;
+    cursor: pointer;
+    background: #fafafa;
+}
+
+.payment-option-box:hover {
+    background: #f1f5f9;
+    border-color: #0d6efd !important;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+/* Summary Card & CTAs */
+.summary-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+}
+
+.checkout-cta {
+    background: linear-gradient(135deg, #0d6efd, #0b5ed7);
+    border: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.checkout-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(13, 110, 253, 0.3);
+}
+
+.place-order-btn {
+    background: linear-gradient(135deg, #198754, #157347);
+    border: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.place-order-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(25, 135, 84, 0.3);
+}
+
+/* Order Cards */
+.order-card {
+    transition: box-shadow 0.2s ease;
+    border: 1px solid #e9ecef !important;
+}
+
+.order-card:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
+}

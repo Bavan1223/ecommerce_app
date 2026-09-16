@@ -1,61 +1,168 @@
 {% extends "base.html" %}
 
-{% block title %}Your Shopping Cart{% endblock %}
+{% block title %}Your Shopping Cart - Tech Mart{% endblock %}
 
 {% block content %}
+<div class="cart-page-wrapper">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <h2 class="section-heading mb-0">🛒 Your Shopping Cart</h2>
+        {% if cart_items %}
+        <a href="{{ url_for('cart_clear') }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Clear all items from your cart?')">
+            🗑️ Clear Cart
+        </a>
+        {% endif %}
+    </div>
 
-<h2 class="section-title text-center mb-4">🛒 Your Shopping Cart</h2>
+    {% if cart_items %}
+    <div class="row g-4">
+        <!-- Cart Items Table Section -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 rounded-3 overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 text-center">
+                        <thead class="table-dark">
+                            <tr>
+                                <th class="text-start ps-3">Product</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Subtotal</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in cart_items %}
+                            <tr>
+                                <td class="text-start ps-3">
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ url_for('static', filename='images/' ~ item.image_url) }}" 
+                                             alt="{{ item.name }}" 
+                                             width="65" 
+                                             height="65"
+                                             class="me-3 rounded border object-fit-contain p-1 bg-light"
+                                             onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/myphoto.png') }}';">
+                                        <div>
+                                            <h6 class="mb-0 fw-bold">{{ item.name }}</h6>
+                                            <span class="badge bg-secondary-subtle text-dark">ID: #{{ item.id }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="fw-semibold">${{ "%.2f" | format(item.price) }}</td>
+                                <td>
+                                    <div class="input-group input-group-sm justify-content-center qty-picker" style="max-width: 120px; margin: 0 auto;">
+                                        <a href="{{ url_for('cart_update_quantity', product_id=item.id, action='decrease') }}" 
+                                           class="btn btn-outline-secondary px-2" title="Decrease">−</a>
+                                        <span class="input-group-text bg-white fw-bold px-3">{{ item.quantity }}</span>
+                                        <a href="{{ url_for('cart_update_quantity', product_id=item.id, action='increase') }}" 
+                                           class="btn btn-outline-secondary px-2" title="Increase">+</a>
+                                    </div>
+                                </td>
+                                <td class="fw-bold text-success">${{ "%.2f" | format(item.subtotal) }}</td>
+                                <td>
+                                    <a href="{{ url_for('remove_from_cart', product_id=item.id) }}" 
+                                       class="btn btn-sm btn-outline-danger" 
+                                       title="Remove item"
+                                       onclick="return confirm('Remove this product from cart?')">
+                                        ✕
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-{% if cart_items %}
-<div class="cart-details-container container mt-3">
-    
-    <table class="table table-striped table-bordered align-middle text-center">
-        <thead class="table-dark">
-            <tr>
-                <th>Product</th>
-                <th>Price</th>
-                <th>Quantity</th>
-                <th>Subtotal</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in cart_items %}
-            <tr>
-                <td>
-                    <div class="d-flex align-items-center">
-                        <img src="{{ url_for('static', filename='images/' ~ item.image_url) }}" 
-                             alt="{{ item.name }}" 
-                             width="60" 
-                             class="me-3 rounded"
-                             onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/myphoto.png') }}';">
-                        
-                        <span class="fw-bold">{{ item.name }}</span>
+            <!-- Coupon promo banner / info -->
+            <div class="card shadow-sm border-0 rounded-3 mt-3 p-3 bg-light">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div>
+                        <strong class="text-primary">💡 Available Promo Codes:</strong>
+                        <span class="badge bg-light text-dark border ms-2">SAVE10 (10% off)</span>
+                        <span class="badge bg-light text-dark border ms-1">SAVE20 (20% off)</span>
+                        <span class="badge bg-light text-dark border ms-1">TECHMART50 ($50 off &gt;$150)</span>
                     </div>
-                </td>
-                <td>${{ "%.2f" | format(item.price) }}</td>
-                <td>{{ item.quantity }}</td>
-                <td>${{ "%.2f" | format(item.subtotal) }}</td>
-                <td>
-                    <a href="{{ url_for('remove_from_cart', product_id=item.id) }}" class="small-blue-link">
-                        Remove
-                    </a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                </div>
+            </div>
 
-    <div class="checkout-area">
-        <p class="total-price">Order Total: <b>${{ "%.2f" | format(total_price) }}</b></p>
-        <button class="checkout-button">Proceed to Checkout</button>
+            <div class="mt-3">
+                <a href="{{ url_for('index') }}" class="btn btn-link text-decoration-none ps-0">
+                    ← Continue Shopping
+                </a>
+            </div>
+        </div>
+
+        <!-- Order Summary & Cashout Sidecard -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 rounded-3 p-4 summary-card">
+                <h4 class="fw-bold mb-3 border-bottom pb-2">Order Summary</h4>
+
+                <!-- Coupon input form -->
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold text-muted">Promo / Coupon Code</label>
+                    {% if applied_coupon %}
+                        <div class="d-flex align-items-center justify-content-between bg-success-subtle text-success p-2 rounded border border-success">
+                            <span>✅ Code <strong>{{ applied_coupon }}</strong> active</span>
+                            <form action="{{ url_for('remove_coupon') }}" method="POST" class="m-0">
+                                <input type="hidden" name="next" value="cart">
+                                <button type="submit" class="btn btn-sm btn-link text-danger p-0 text-decoration-none">Remove</button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <form action="{{ url_for('apply_coupon') }}" method="POST" class="d-flex gap-2">
+                            <input type="hidden" name="next" value="cart">
+                            <input type="text" name="coupon_code" class="form-control form-control-sm text-uppercase" placeholder="Enter coupon" required>
+                            <button type="submit" class="btn btn-sm btn-dark">Apply</button>
+                        </form>
+                    {% endif %}
+                </div>
+
+                <ul class="list-unstyled mb-4">
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Subtotal</span>
+                        <span class="fw-semibold">${{ "%.2f" | format(subtotal) }}</span>
+                    </li>
+                    {% if discount > 0 %}
+                    <li class="d-flex justify-content-between py-2 border-bottom text-success">
+                        <span>Discount ({{ applied_coupon }})</span>
+                        <span class="fw-semibold">-${{ "%.2f" | format(discount) }}</span>
+                    </li>
+                    {% endif %}
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Estimated Shipping</span>
+                        {% if shipping_fee == 0 %}
+                            <span class="badge bg-success-subtle text-success fw-bold">FREE</span>
+                        {% else %}
+                            <span class="fw-semibold">${{ "%.2f" | format(shipping_fee) }}</span>
+                        {% endif %}
+                    </li>
+                    <li class="d-flex justify-content-between py-3 fs-5 fw-bold text-dark">
+                        <span>Total</span>
+                        <span class="text-primary">${{ "%.2f" | format(total_price) }}</span>
+                    </li>
+                </ul>
+
+                <a href="{{ url_for('checkout') }}" class="btn btn-primary btn-lg w-100 fw-bold shadow-sm checkout-cta">
+                    Proceed to Checkout →
+                </a>
+
+                <div class="text-center mt-3 small text-muted">
+                    🔒 Safe &amp; Secure Checkout. 30-Day Money Back Guarantee.
+                </div>
+            </div>
+        </div>
     </div>
+
+    {% else %}
+    <div class="card shadow-sm border-0 rounded-4 text-center p-5 mt-4 empty-cart-box">
+        <div class="display-1 mb-3">🛒</div>
+        <h3 class="fw-bold">Your cart is empty</h3>
+        <p class="text-muted mb-4">Looks like you haven't added any tech goodies yet.</p>
+        <div>
+            <a href="{{ url_for('index') }}" class="btn btn-primary px-4 py-2 fw-bold">
+                Explore Products Now
+            </a>
+        </div>
+    </div>
+    {% endif %}
 </div>
-
-{% else %}
-    <div class="empty-cart-message text-center mt-4">
-        <p>Your cart is currently empty. <a href="{{ url_for('index') }}" class="small-blue-link">Start Shopping!</a></p>
-    </div>
-{% endif %}
-
-{% endblock %}
+{% endblock %}

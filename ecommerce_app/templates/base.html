@@ -16,19 +16,22 @@
             <a href="{{ url_for('index') }}">Home</a>
             
             <a href="{% if 'user_id' in session %}{{ url_for('cart') }}{% else %}#{% endif %}"
-               class="{% if 'user_id' not in session %}disabled-link{% endif %}">
+               class="cart-nav-link {% if 'user_id' not in session %}disabled-link{% endif %}">
                Cart
+               <span class="cart-badge {% if cart_count > 0 %}active{% endif %}">{{ cart_count }}</span>
             </a>
             
             {% if 'user_id' in session %}
+                <a href="{{ url_for('user_orders') }}">My Orders</a>
                 <a href="{{ url_for('profile') }}">Account</a>
                 <a href="{{ url_for('logout') }}" class="logout-link">Logout</a>
             {% else %}
                 <a href="{{ url_for('login') }}">Log In / Register</a>
             {% endif %}
             {% if session.is_admin %}
-            <a href="{{ url_for('admin_dashboard') }}" style="color: #ffc107; font-weight: bold;">Admin</a>
+                <a href="{{ url_for('admin_dashboard') }}" style="color: #ffc107; font-weight: bold;">Admin</a>
             {% endif %}
+        </nav>
     </header>
 
     <main class="container">

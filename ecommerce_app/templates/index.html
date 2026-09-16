@@ -9,29 +9,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   buttons.forEach(button => {
     button.addEventListener('click', (e) => {
-      e.preventDefault();
-
-      // Create popup message
-      const message = document.createElement('span');
-      message.className = 'cart-popup';
-      message.textContent = '✅ Item added to cart';
-      button.parentElement.appendChild(message);
-
-      // Animate in
-      setTimeout(() => message.classList.add('show'), 10);
-
-      // Animate out & remove
-      setTimeout(() => {
-        message.classList.remove('show');
-        setTimeout(() => message.remove(), 300);
-      }, 1500);
-
-      // Redirect to Flask route after short delay
       const link = button.closest('a');
       if (link && link.href) {
-        setTimeout(() => {
-          window.location.href = link.href;
-        }, 400);
+        // Let natural navigation take place, button shows loading state
+        button.innerText = 'Adding...';
+        button.disabled = true;
+        window.location.href = link.href;
       }
     });
   });
