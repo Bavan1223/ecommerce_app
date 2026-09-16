@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}My Orders - Tech Mart{% endblock %}
+
+{% block content %}
+<div class="orders-page-container py-3">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="section-heading mb-1">📜 My Order History</h2>
+            <p class="text-muted mb-0">Track shipments and review past orders</p>
+        </div>
+        <a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-sm">
+            🛍️ Continue Shopping
+        </a>
+    </div>
+
+    {% if orders %}
+    <div class="orders-list">
+        {% for order in orders %}
+        <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden order-card">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <div>
+                        <span class="text-muted small d-block">ORDER PLACED</span>
+                        <span class="fw-semibold small">{{ order.created_at.strftime('%B %d, %Y') }}</span>
+                    </div>
+                    <div class="border-start ps-3">
+                        <span class="text-muted small d-block">TOTAL</span>
+                        <span class="fw-bold small text-primary">${{ "%.2f" | format(order.total_amount) }}</span>
+                    </div>
+                    <div class="border-start ps-3">
+                        <span class="text-muted small d-block">SHIP TO</span>
+                        <span class="small fw-semibold">{{ order.full_name }}</span>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge 
+                        {% if order.order_status == 'Delivered' %}bg-success
+                        {% elif order.order_status == 'Shipped' %}bg-info text-dark
+                        {% elif order.order_status == 'Cancelled' %}bg-danger
+                        {% else %}bg-warning text-dark{% endif %} px-3 py-2">
+                        {{ order.order_status }}
+                    </span>
+                    <a href="{{ url_for('order_details', order_id=order.id) }}" class="btn btn-sm btn-outline-dark">
+                        View Order #{{ order.id }}
+                    </a>
+                </div>
+            </div>
+
+            <div class="card-body p-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="d-flex flex-column gap-2">
+                            {% for item in order.items %}
+                            <div class="d-flex align-items-center">
+                                <img src="{{ url_for('static', filename='images/' ~ item.image_url) }}" 
+                                     alt="{{ item.product_name }}" 
+                                     width="50" 
+                                     height="50" 
+                                     class="rounded border me-3 object-fit-contain p-1 bg-light"
+                                     onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/myphoto.png') }}';">
+                                <div>
+                                    <div class="fw-semibold">{{ item.product_name }}</div>
+                                    <div class="small text-muted">
+                                        Qty: {{ item.quantity }} × ${{ "%.2f" | format(item.product_price) }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                        <div class="small text-muted mb-1">
+                            Payment: <strong>{{ order.payment_status }}</strong> ({{ order.payment_method | upper }})
+                        </div>
+                        <a href="{{ url_for('order_details', order_id=order.id) }}" class="btn btn-primary btn-sm mt-2">
+                            📄 View Invoice Receipt
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="card border-0 shadow-sm rounded-4 text-center p-5 mt-3 empty-orders-box">
+        <div class="display-3 mb-3">📦</div>
+        <h4 class="fw-bold">No orders found</h4>
+        <p class="text-muted mb-4">You haven't made any purchases yet. Your tech upgrades are just a click away!</p>
+        <div>
+            <a href="{{ url_for('index') }}" class="btn btn-primary px-4 py-2 fw-semibold">
+                Start Shopping
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

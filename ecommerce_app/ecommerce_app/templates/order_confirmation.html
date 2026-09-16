@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Order Confirmation #{{ order.id }} - Tech Mart{% endblock %}
+
+{% block content %}
+<div class="order-confirmation-container py-4">
+    <!-- Success Notification Card -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 text-center p-4 bg-white">
+        <div class="confirmation-icon mb-3">
+            <span style="font-size: 3.5rem;">🎉</span>
+        </div>
+        <h2 class="fw-bold text-success mb-2">
+            {% if is_detail_view %}Order Details #{{ order.id }}{% else %}Thank You! Your Order is Confirmed!{% endif %}
+        </h2>
+        <p class="text-muted mb-3">
+            A confirmation has been sent to <strong>{{ order.email }}</strong>. We are getting your tech gear ready!
+        </p>
+        <div class="d-flex justify-content-center gap-2 flex-wrap">
+            <span class="badge bg-primary px-3 py-2 fs-6">Order ID: #{{ order.id }}</span>
+            <span class="badge bg-warning text-dark px-3 py-2 fs-6">Status: {{ order.order_status }}</span>
+            <span class="badge bg-info text-dark px-3 py-2 fs-6">Payment: {{ order.payment_status }}</span>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Order Items List -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold">📦 Items in this Order</h5>
+                    <span class="text-muted small">Ordered on {{ order.created_at.strftime('%b %d, %Y at %I:%M %p') }}</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3">Item</th>
+                                <th class="text-center">Price</th>
+                                <th class="text-center">Quantity</th>
+                                <th class="text-end pe-3">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.items %}
+                            <tr>
+                                <td class="ps-3">
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ url_for('static', filename='images/' ~ item.image_url) }}" 
+                                             alt="{{ item.product_name }}" 
+                                             width="55" 
+                                             height="55" 
+                                             class="rounded border me-3 object-fit-contain p-1 bg-light"
+                                             onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/myphoto.png') }}';">
+                                        <div>
+                                            <div class="fw-bold">{{ item.product_name }}</div>
+                                            <small class="text-muted">Item Ref #{{ item.product_id }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">${{ "%.2f" | format(item.product_price) }}</td>
+                                <td class="text-center"><span class="badge bg-secondary px-2">{{ item.quantity }}</span></td>
+                                <td class="text-end pe-3 fw-bold text-success">${{ "%.2f" | format(item.subtotal) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{{ url_for('user_orders') }}" class="btn btn-outline-primary fw-semibold">
+                    📜 View All My Orders
+                </a>
+                <a href="{{ url_for('index') }}" class="btn btn-primary fw-semibold">
+                    🛍️ Continue Shopping
+                </a>
+                <button onclick="window.print()" class="btn btn-outline-secondary ms-auto">
+                    🖨️ Print Receipt
+                </button>
+            </div>
+        </div>
+
+        <!-- Order Summary & Shipping Details -->
+        <div class="col-lg-4">
+            <!-- Receipt breakdown -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+                <h5 class="fw-bold border-bottom pb-2 mb-3">Receipt Summary</h5>
+                <ul class="list-unstyled mb-0">
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Items Subtotal</span>
+                        <span class="fw-semibold">${{ "%.2f" | format(order.subtotal_amount) }}</span>
+                    </li>
+                    {% if order.discount_amount > 0 %}
+                    <li class="d-flex justify-content-between py-2 border-bottom text-success">
+                        <span>Discount Applied</span>
+                        <span class="fw-semibold">-${{ "%.2f" | format(order.discount_amount) }}</span>
+                    </li>
+                    {% endif %}
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Shipping Fee</span>
+                        {% if order.shipping_fee == 0 %}
+                            <span class="badge bg-success-subtle text-success fw-bold">FREE</span>
+                        {% else %}
+                            <span class="fw-semibold">${{ "%.2f" | format(order.shipping_fee) }}</span>
+                        {% endif %}
+                    </li>
+                    <li class="d-flex justify-content-between py-3 fs-5 fw-bold text-dark">
+                        <span>Total Paid / Due</span>
+                        <span class="text-primary">${{ "%.2f" | format(order.total_amount) }}</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Shipping address information -->
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h5 class="fw-bold border-bottom pb-2 mb-3">Shipping &amp; Delivery</h5>
+                <div class="small lh-lg">
+                    <div><strong>Recipient:</strong> {{ order.full_name }}</div>
+                    <div><strong>Phone:</strong> {{ order.phone }}</div>
+                    <div><strong>Address:</strong> {{ order.address }}</div>
+                    <div><strong>Location:</strong> {{ order.city }}, {{ order.state }} {{ order.zip_code }}</div>
+                    <div><strong>Payment Method:</strong> {{ order.payment_method | upper }}</div>
+                    {% if order.notes %}
+                    <div class="mt-2 p-2 bg-light rounded text-muted">
+                        <em>"{{ order.notes }}"</em>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

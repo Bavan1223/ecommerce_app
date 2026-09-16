@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Manage Orders{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="section-title mb-0" style="margin: 0; border: none;">📦 Customer Orders Management</h2>
+            <p class="text-muted mb-0">View all customer transactions and update order fulfillment status</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">
+                ← Manage Products
+            </a>
+            <a href="{{ url_for('admin_add_product') }}" class="btn btn-primary">
+                + Add Product
+            </a>
+        </div>
+    </div>
+
+    <!-- Status Filter Buttons -->
+    <div class="mb-4 d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('admin_orders') }}" class="btn btn-sm {% if not current_filter %}btn-dark{% else %}btn-outline-dark{% endif %}">
+            All Orders ({{ orders|length }})
+        </a>
+        <a href="{{ url_for('admin_orders', status='Processing') }}" class="btn btn-sm {% if current_filter == 'Processing' %}btn-warning{% else %}btn-outline-warning text-dark{% endif %}">
+            ⏳ Processing
+        </a>
+        <a href="{{ url_for('admin_orders', status='Shipped') }}" class="btn btn-sm {% if current_filter == 'Shipped' %}btn-info{% else %}btn-outline-info text-dark{% endif %}">
+            🚚 Shipped
+        </a>
+        <a href="{{ url_for('admin_orders', status='Delivered') }}" class="btn btn-sm {% if current_filter == 'Delivered' %}btn-success{% else %}btn-outline-success{% endif %}">
+            ✅ Delivered
+        </a>
+    </div>
+
+    {% if orders %}
+    <div class="table-responsive bg-white rounded-3 shadow-sm border">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>Order #</th>
+                    <th>Customer</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th>Payment</th>
+                    <th>Fulfillment Status</th>
+                    <th>Placed On</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td class="fw-bold">#{{ order.id }}</td>
+                    <td>
+                        <div class="fw-semibold">{{ order.full_name }}</div>
+                        <div class="small text-muted">{{ order.email }}</div>
+                        <div class="small text-muted">{{ order.city }}, {{ order.state }}</div>
+                    </td>
+                    <td>
+                        <span class="badge bg-secondary">{{ order.items|length }} item(s)</span>
+                        <div class="small text-muted mt-1" style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            {% for item in order.items %}{{ item.product_name }}{% if not loop.last %}, {% endif %}{% endfor %}
+                        </div>
+                    </td>
+                    <td class="fw-bold text-success">${{ "%.2f" | format(order.total_amount) }}</td>
+                    <td>
+                        <span class="badge 
+                            {% if 'Paid' in order.payment_status %}bg-success
+                            {% elif 'Cash' in order.payment_status %}bg-primary
+                            {% else %}bg-secondary{% endif %}">
+                            {{ order.payment_status }}
+                        </span>
+                        <div class="small text-muted mt-1">{{ order.payment_method | upper }}</div>
+                    </td>
+                    <td>
+                        <form action="{{ url_for('admin_update_order_status', order_id=order.id) }}" method="POST" class="d-flex gap-1 align-items-center">
+                            <select name="order_status" class="form-select form-select-sm" style="width: 130px;">
+                                <option value="Processing" {% if order.order_status == 'Processing' %}selected{% endif %}>Processing</option>
+                                <option value="Shipped" {% if order.order_status == 'Shipped' %}selected{% endif %}>Shipped</option>
+                                <option value="Delivered" {% if order.order_status == 'Delivered' %}selected{% endif %}>Delivered</option>
+                                <option value="Cancelled" {% if order.order_status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                            </select>
+                            <input type="hidden" name="payment_status" value="{{ order.payment_status }}">
+                            <button type="submit" class="btn btn-sm btn-outline-primary" title="Update Status">Save</button>
+                        </form>
+                    </td>
+                    <td class="small text-muted">{{ order.created_at.strftime('%b %d, %Y') }}</td>
+                    <td>
+                        <a href="{{ url_for('order_details', order_id=order.id) }}" class="btn btn-sm btn-outline-dark" target="_blank">
+                            Invoice
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% else %}
+    <div class="card border-0 shadow-sm rounded-4 text-center p-5 bg-white">
+        <h5 class="fw-bold">No orders found</h5>
+        <p class="text-muted">No orders match the current filter.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

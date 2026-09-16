@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}My Account{% endblock %}
+
+{% block content %}
+
+<div class="account-container">
+    
+    <aside class="sidebar">
+       <div class="profile-card">
+    
+    {% if user.profile_image %}
+        <img src="{{ url_for('static', filename='uploads/' + user.profile_image) }}" alt="Profile"
+             style="height: 80px; width: 80px; object-fit: cover;">
+             
+    {% elif user.gender == 'male' %}
+        <img src="https://cdn-icons-png.flaticon.com/512/219/219969.png" alt="Male Profile">
+        
+    {% elif user.gender == 'female' %}
+        <img src="https://cdn-icons-png.flaticon.com/512/219/219970.png" alt="Female Profile">
+        
+    {% else %}
+        <img src="https://cdn-icons-png.flaticon.com/512/1077/1077114.png" alt="Default Profile">
+    {% endif %}
+    <h6>Hello,</h6>
+    <strong>{{ user.username }}</strong>
+</div>
+
+        <div class="menu-section">
+            <h6>My Orders</h6>
+            <a href="{{ url_for('user_orders') }}">Order History</a>
+            <a href="{{ url_for('user_orders') }}">Track Orders</a>
+        </div>
+
+        <div class="menu-section">
+            <h6>Account Settings</h6>
+            <a href="{{ url_for('profile_edit') }}">Edit Profile Information</a>
+        </div>
+
+        <div class="menu-section">
+            <h6>My Stuff</h6>
+            <a href="{{ url_for('cart') }}">My Cart</a>
+        </div>
+        
+        <a href="{{ url_for('logout') }}" class="logout-btn-link">
+            <button class="logout-btn">
+                <b>Logout</b>
+            </button>
+        </a>
+    </aside>
+
+    <main class="profile-content">
+    <div class="section">
+        <h5>Personal Information
+            <a href="{{ url_for('profile_edit') }}" class="edit-btn">Edit</a>
+        </h5>
+        <div class="info">
+            <p><strong>Name:</strong> {{ user.username }}</p>
+            <p><strong>Email:</strong> {{ user.email }}</p>
+            <p><strong>Gender:</strong> {{ user.gender.capitalize() if user.gender else 'Not set' }}</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h5>Recent Orders
+            <a href="{{ url_for('user_orders') }}" class="edit-btn">View All</a>
+        </h5>
+        <div class="info">
+            {% if user.orders %}
+                <p>You have placed <strong>{{ user.orders|length }}</strong> order(s).</p>
+                <div class="list-group list-group-flush mt-2">
+                    {% for ord in user.orders[:3] %}
+                    <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>Order #{{ ord.id }}</strong>
+                            <small class="text-muted d-block">{{ ord.created_at.strftime('%b %d, %Y') }} • ${{ "%.2f" | format(ord.total_amount) }}</small>
+                        </div>
+                        <span class="badge bg-secondary">{{ ord.order_status }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted">You have 0 active orders. Ready to find something cool?</p>
+                <a href="{{ url_for('index') }}" class="btn btn-sm btn-primary mt-1">Start Shopping</a>
+            {% endif %}
+        </div>
+    </div>
+    </main>
+</div>
+{% endblock %}

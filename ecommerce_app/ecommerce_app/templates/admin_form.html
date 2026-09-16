@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="login-card" style="max-width: none; text-align: left;">
+                <h2 class="mb-4">{{ title }}</h2>
+
+                <form method="POST" action="{% if product.id %}{{ url_for('admin_edit_product', product_id=product.id) }}{% else %}{{ url_for('admin_add_product') }}{% endif %}">
+                    
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Product Name</label>
+                        <input type="text" class="form-control" id="name" name="name" 
+                               value="{{ product.name or '' }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="price" class="form-label">Price</label>
+                        <input type="number" class="form-control" id="price" name="price" 
+                               value="{{ product.price or '' }}" step="0.01" min="0" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" 
+                                  rows="4">{{ product.description or '' }}</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="image_url" class="form-label">Image Filename (e.g., "watch.jpg")</label>
+                        <input type="text" class="form-control" id="image_url" name="image_url" 
+                               value="{{ product.image_url or '' }}" placeholder="myphoto.png">
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            {% if product.id %}Update Product{% else %}Add Product{% endif %}
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
